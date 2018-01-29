@@ -8,58 +8,55 @@ import RaisedButton from 'material-ui/RaisedButton';
 import RappStarterActions from '../actions/RappStarterActions';
 import RappStarterStore from '../stores/RappStarterStore';
 
+
 export default class RappStarter extends React.Component {
   constructor(...args) {
     super(...args);
-
-    this.getTestString = this.getTestString.bind(this);
-    this.getRapps = this.getRapps.bind(this);
-    this.setDefaultRappSelection = this.setDefaultRappSelection.bind(this);
 
     this.state = {
       value: "no_rapp_selected",
       test_string: RappStarterStore.getTestString(),
       rapps: RappStarterStore.getRapps(),
+      rappStatus: RappStarterStore.getRappStatus(),
+      selectedRapp: RappStarterStore.getSelectedRapp(),
+      rappButtonLabel: "Start",
+      rappButtonPrimary: true,
     };
 
-    this.actions = new RappStarterActions();
-    this.actions.init(this.props.ros);
   }
 
   componentWillMount() {
-    RappStarterStore.on("change", this.getTestString);
-    RappStarterStore.on("change", this.getRapps);
-    RappStarterStore.on("change", this.setDefaultRappSelection);
+    this.actions = new RappStarterActions();
+    this.actions.init(this.props.ros);
+
+    RappStarterStore.on("change", this.getAll);
   }
 
   componentWillUnmount() {
-    RappStarterStore.removeListener("change", this.getTestString);
-    RappStarterStore.removeListener("change", this.getRapps);
-    RappStarterStore.removeListener("change", this.setDefaultRappSelection);
+    RappStarterStore.removeListener("change", this.getAll);
   }
 
-  getTestString() {
+  getAll = () => {
     this.setState({
-      test_string: RappStarterStore.getTestString(),
-    });
+      rapps: RappStarterStore.getRapps(),
+      rappStatus: RappStarterStore.getRappStatus(),
+      selectedRapp: RappStarterStore.getSelectedRapp(),
+    })
   }
 
-  getRapps() {
-      this.setState({
-        rapps: RappStarterStore.getRapps(),
-      });
-  }
+  buttonClicked = () => {
+    console.log(this.state.button_label, "button clicked, rapp name:", this.state.value);
 
-  setDefaultRappSelection() {
-    if (this.state.value === "no_rapp_selected" && RappStarterStore.getRapps().length > 0){
-      this.setState({
-        value: RappStarterStore.getRapps()[0].name,
-      });
+    const rappRunning = (this.state.selectedRapp === this.state.rappStatus.rapp.name);
+
+    if (rappRunning){
+      console.log("stop");
+      this.actions.stopRapp();
+    } else {
+      console.log("start");
+      this.actions.startRapp(this.state.selectedRapp);
     }
   }
-
-
-  handleChange = (event, index, value) => this.setState({value});
 
   render() {
     if (this.state.rapps.length === 0){
@@ -69,15 +66,22 @@ export default class RappStarter extends React.Component {
         </Toolbar>
       );
     } else {
+
+      const rappButtonLabel = (this.state.selectedRapp === this.state.rappStatus.rapp.name) ? "Stop": "Start";
+      console.log(this.state.rappStatus.rapp.name)
+
       return (
         <Toolbar>
-          <DropDownMenu value={this.state.value} onChange={this.handleChange}>
+          <DropDownMenu value={this.state.selectedRapp} onChange={this.actions.handleRappMenuChange}>
             {this.state.rapps.map((rapp) => (
-              <MenuItem value={rapp.name} primaryText={rapp.name} />
+              <MenuItem key={rapp.name} value={rapp.name} primaryText={rapp.name} />
             ))}
           </DropDownMenu>
           <ToolbarGroup>
-            <RaisedButton label={'Start'} primary={true} />
+            <RaisedButton onClick={this.buttonClicked}
+                          label={rappButtonLabel}
+                          primary={rappButtonLabel === "Start"}
+                          secondary={rappButtonLabel === "Stop"}/>
           </ToolbarGroup>
         </Toolbar>
       );

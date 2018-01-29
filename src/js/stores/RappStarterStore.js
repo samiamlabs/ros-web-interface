@@ -1,14 +1,15 @@
 import { EventEmitter } from 'events';
 
 import dispatcher from '../dispatcher';
+import Status from '../ros/msg/Status';
 
 class RappStarterStore extends EventEmitter {
   constructor() {
     super();
-    this.test_string = "unchanged";
     this.rapps = [];
+    this.rappStatus = {...Status};
+    this.selectedRapp = "No rapps available";
   }
-
 
   getTestString() {
     return this.test_string;
@@ -18,11 +19,34 @@ class RappStarterStore extends EventEmitter {
     return this.rapps;
   }
 
+  getRappStatus() {
+    return this.rappStatus;
+  }
+
+  getSelectedRapp() {
+    return this.selectedRapp;
+  }
+
   handleActions(action) {
     switch(action.type) {
-      case "TEST": {
-        this.test_string = action.available_rapps[0].name;
+      case "AVAILABLE_RAPPS": {
         this.rapps = action.available_rapps;
+
+        if (this.selectedRapp === "No rapps available" && this.rapps.length > 0) {
+          this.selectedRapp = this.rapps[0].name;
+        }
+
+        this.emit("change");
+        break;
+      }
+      case "RAPP_STATUS": {
+        this.rappStatus = action.rappStatus;
+        this.emit("change");
+        break;
+      }
+      case "SELECTED_RAPP": {
+        console.log("rapp store update", action.selectedRapp);
+        this.selectedRapp =action.selectedRapp;
         this.emit("change");
         break;
       }
