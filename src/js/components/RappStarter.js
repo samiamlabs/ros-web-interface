@@ -45,15 +45,11 @@ export default class RappStarter extends React.Component {
   }
 
   buttonClicked = () => {
-    console.log(this.state.button_label, "button clicked, rapp name:", this.state.value);
-
     const rappRunning = (this.state.selectedRapp === this.state.rappStatus.rapp.name);
 
     if (rappRunning){
-      console.log("stop");
       this.actions.stopRapp();
     } else {
-      console.log("start");
       this.actions.startRapp(this.state.selectedRapp);
     }
   }
@@ -62,21 +58,26 @@ export default class RappStarter extends React.Component {
     if (this.state.rapps.length === 0){
       return (
         <Toolbar>
-          <ToolbarTitle text={"No robot apps found"} />
+          <ToolbarGroup firstChild={true}>
+            <ToolbarTitle text={"No robot apps found"} />
+          </ToolbarGroup>
         </Toolbar>
       );
     } else {
 
       const rappButtonLabel = (this.state.selectedRapp === this.state.rappStatus.rapp.name) ? "Stop": "Start";
-      console.log(this.state.rappStatus.rapp.name)
 
       return (
         <Toolbar>
-          <DropDownMenu value={this.state.selectedRapp} onChange={this.actions.handleRappMenuChange}>
-            {this.state.rapps.map((rapp) => (
-              <MenuItem key={rapp.name} value={rapp.name} primaryText={rapp.name} />
-            ))}
-          </DropDownMenu>
+
+          <ToolbarGroup firstChild={true}>
+            <DropDownMenu value={this.state.selectedRapp} onChange={this.actions.handleRappMenuChange}>
+              {this.state.rapps.map((rapp) => (
+                <MenuItem key={rapp.name} value={rapp.name} primaryText={rapp.name} />
+              ))}
+            </DropDownMenu>
+          </ToolbarGroup>
+
           <ToolbarGroup>
             <RaisedButton onClick={this.buttonClicked}
                           label={rappButtonLabel}

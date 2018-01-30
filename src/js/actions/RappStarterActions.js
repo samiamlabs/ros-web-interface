@@ -41,29 +41,32 @@ export default class RappStarterActions {
        serviceType : 'rocon_app_manager_msgs/StartRapp'
      });
 
-     // this.stopRappClient.callService(this.request, function(result) {
-     //    console.log('Stopping rapp');
-     //  });
-
   }
 
   handleRappMenuChange = (event, index, value) => {
-    console.log(value)
     dispatcher.dispatch({type: "SELECTED_RAPP", selectedRapp: value});
   }
 
   startRapp = (name) => {
-    console.log("starting rapp")
     this.request = new ROSLIB.ServiceRequest({
       name: name,
     });
-    this.startRappClient.callService(this.request, function(result) {
-      // console.log('Starting rapp', name);
+
+    this.stopRequest = new ROSLIB.ServiceRequest({
+    });
+
+    this.startRappClient.callService(this.request, (result) => {
+      if (result.started === false){
+        // Stop running rapp
+        this.stopRappClient.callService(this.stopPrequest, (result) => {
+          // Start selected rapp
+          this.startRappClient.callService(this.request, function(result) {});
+        });
+      }
     });
   }
 
-  stopRapp = (name) => {
-    console.log("stopping rapp");
+  stopRapp = () => {
     this.stopRappClient.callService();
   }
 }

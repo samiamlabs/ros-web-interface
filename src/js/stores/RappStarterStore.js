@@ -45,7 +45,6 @@ class RappStarterStore extends EventEmitter {
         break;
       }
       case "SELECTED_RAPP": {
-        console.log("rapp store update", action.selectedRapp);
         this.selectedRapp =action.selectedRapp;
         this.emit("change");
         break;
