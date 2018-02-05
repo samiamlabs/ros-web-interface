@@ -15,7 +15,6 @@ export default class RappStarter extends React.Component {
 
     this.state = {
       value: "no_rapp_selected",
-      test_string: RappStarterStore.getTestString(),
       rapps: RappStarterStore.getRapps(),
       rappStatus: RappStarterStore.getRappStatus(),
       selectedRapp: RappStarterStore.getSelectedRapp(),

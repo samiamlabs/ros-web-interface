@@ -11,10 +11,6 @@ class RappStarterStore extends EventEmitter {
     this.selectedRapp = "No rapps available";
   }
 
-  getTestString() {
-    return this.test_string;
-  }
-
   getRapps() {
     return this.rapps;
   }
@@ -41,6 +37,8 @@ class RappStarterStore extends EventEmitter {
       }
       case "RAPP_STATUS": {
         this.rappStatus = action.rappStatus;
+        // console.log(this.rappStatus);
+        // console.log(this.rappStatus.published_interfaces[0]);
         this.emit("change");
         break;
       }

@@ -11,6 +11,8 @@ import getMuiTheme from 'material-ui/styles/getMuiTheme';
 import AppBar from 'material-ui/AppBar';
 
 import RappStarter from './js/components/RappStarter.js';
+import Capabilities from './js/components/Capabilities.js';
+
 
 import ROSLIB from 'roslib';
 
@@ -62,6 +64,7 @@ class App extends Component {
         <div>
           <AppBar title="Control Center"/>
           <RappStarter ros={this.ros}/>
+          <Capabilities ros={this.ros}/>
         </div>
       </MuiThemeProvider>
     );
