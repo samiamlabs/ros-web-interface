@@ -38,11 +38,13 @@ export default class Capabilities extends React.Component {
     CapabilitiesStore.on("change", this.getAll);
 
     this.actions = new CapabilitiesActions();
-    this.actions.init(this.props.ros);
+    this.actions.init(this.props.rosClient);
   }
 
   componentWillUnmount() {
     CapabilitiesStore.removeListener("change", this.getAll);
+
+    this.actions.dispose();
   }
 
   getAll = () => {

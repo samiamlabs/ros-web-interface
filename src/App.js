@@ -15,6 +15,7 @@ import RappStarter from './js/components/RappStarter.js';
 import Capabilities from './js/components/Capabilities.js';
 
 import ROSLIB from 'roslib';
+import RosClient from 'roslib-client';
 
 class App extends Component {
   constructor(...args) {
@@ -22,12 +23,14 @@ class App extends Component {
     this.state = {
       ros_status: "disconnected",
       drawer_open: false,
-      active_section: 'capabilities',
+      active_section: 'rapps',
     };
 
     this.ros = new ROSLIB.Ros();
 
     this.ros_url = 'ws://localhost:9090'
+    this.rosUrl = 'ws://localhost:9090'
+
     this.ros.connect(this.ros_url);
 
     this.ros_status = "disconnected";
@@ -52,6 +55,13 @@ class App extends Component {
         ros_status: "disconnected",
       });
     });
+
+    // client
+    this.rosClient = new RosClient({
+      url: this.rosUrl,
+    });
+
+
   }
 
   handleToggle = () => this.setState({drawer_open: !this.state.drawer_open});
@@ -91,10 +101,10 @@ class App extends Component {
           </Drawer>
 
           {this.state.active_section === 'rapps' &&
-            <RappStarter ros={this.ros}/>
+            <RappStarter rosClient={this.rosClient}/>
           }
           {this.state.active_section === 'capabilities' &&
-            <Capabilities ros={this.ros}/>
+            <Capabilities rosClient={this.rosClient}/>
           }
 
         </div>

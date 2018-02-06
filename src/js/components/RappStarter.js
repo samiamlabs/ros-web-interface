@@ -26,7 +26,7 @@ export default class RappStarter extends React.Component {
 
   componentWillMount() {
     this.actions = new RappStarterActions();
-    this.actions.init(this.props.ros);
+    this.actions.init(this.props.rosClient);
 
     RappStarterStore.on("change", this.getAll);
   }
