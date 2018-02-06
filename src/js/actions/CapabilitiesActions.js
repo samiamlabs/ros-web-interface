@@ -1,20 +1,22 @@
 import dispatcher from '../dispatcher';
 
 import ROSLIB from 'roslib';
+import RosClient from 'roslib-client';
+import {Promise} from 'bluebird';
 
 export default class CapabilitiesActions {
   init(ros) {
     this.ros = ros;
 
+    this.capabilityFetchLock = false;
     this.interface_counter = 0;
 
-    this.capabilityEventListener = new ROSLIB.Topic({
-      ros : this.ros,
-      name : '/capability_server/events',
-      messageType : 'capabilities/CapabilityEvent'
+    this.rosClient = new RosClient({
+      url: 'ws://localhost:9090',
     });
 
-    this.capabilityEventListener.subscribe((message) => {
+
+    this.rosClient.topic.subscribe('/capability_server/events', 'capabilities/CapabilityEvent', (message) => {
       this.getCapabilities();
       this.getRunning();
     });
@@ -49,6 +51,8 @@ export default class CapabilitiesActions {
       serviceType: 'capabilities/StopCapability',
     })
 
+    this.getCapabilities();
+    this.getRunning();
   }
 
   startCapability = (interface_name, provider) => {
@@ -72,41 +76,55 @@ export default class CapabilitiesActions {
 
   }
 
-  getCapabilities = () => {
-    const interfaceRequest = new ROSLIB.ServiceRequest();
-
-    dispatcher.dispatch({type: "CLEAR_CAPABILITY_BUFFER"});
-
-      if (this.interface_counter !== 0){ // if already fetching
-        return;
-      }
-
-    // TODO: add failed callback
-    this.getInterfacesClient.callService(interfaceRequest, (result) => {
-      this.interface_counter = result.interfaces.length;
-      result.interfaces.forEach( (interface_name) => {
-        const providerRequest = new ROSLIB.ServiceRequest({
-          interface: interface_name,
-          include_semantic: false,
-        });
-
-        // callService does not block the thread here
-        this.getProvidersClient.callService(providerRequest, (result) => {
-          dispatcher.dispatch({type: "ADD_CAPABILITY_TO_BUFFER", interface_name, providers: result.providers});
-
-          this.interface_counter--;
-          if(this.interface_counter === 0){ // all interface providers received
-              dispatcher.dispatch({type: "SYNC_CAPABILITY_BUFFER"});
-          }
-        });
-      });
-    });
-  }
-
   getRunning = () => {
-    const request = new ROSLIB.ServiceRequest();
-    this.getRunningClient.callService(request, (result) => {
+    this.rosClient.service.call(
+      '/capability_server/get_running_capabilities',
+      'capabilities/GetRunningCapabilities',
+      {}
+    ).then( (result) => {
       dispatcher.dispatch({type: "RUNNING_CAPABILITIES", running: result.running_capabilities});
     });
   }
+
+  getCapabilities = () => {
+    const getInterfaces = this.rosClient.service.call(
+      '/capability_server/get_interfaces',
+      'capabilities/GetInterfaces',
+      {}
+    );
+
+    getInterfaces.then( result => {
+      const interfaces = [];
+      const providers = [];
+
+      result.interfaces.forEach( interface_name => {
+        const getProviders = this.rosClient.service.call(
+          '/capability_server/get_providers',
+          'capabilities/GetProviders',
+          {
+            interface: interface_name,
+            include_semantic: false,
+          }
+        );
+
+        providers.push(getProviders);
+        interfaces.push(interface_name);
+      });
+
+      Promise.all(providers).then( (result) => {
+
+        const capabilities = [];
+        for (let index = 0; index < interfaces.length; index++) {
+          result[index].providers.forEach( provider => {
+            capabilities.push({interface_name: interfaces[index], provider: provider});
+          });
+        }
+
+        dispatcher.dispatch({type: "AVAILABLE_CAPABILITIES", available: capabilities});
+
+      });
+
+    });
+  }
+
 }

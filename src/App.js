@@ -8,11 +8,11 @@ import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
-import AppBar from 'material-ui/AppBar';
+
+import {AppBar, Drawer, MenuItem} from 'material-ui';
 
 import RappStarter from './js/components/RappStarter.js';
 import Capabilities from './js/components/Capabilities.js';
-
 
 import ROSLIB from 'roslib';
 
@@ -21,6 +21,8 @@ class App extends Component {
     super(...args);
     this.state = {
       ros_status: "disconnected",
+      drawer_open: false,
+      active_section: 'capabilities',
     };
 
     this.ros = new ROSLIB.Ros();
@@ -50,9 +52,11 @@ class App extends Component {
         ros_status: "disconnected",
       });
     });
-
-
   }
+
+  handleToggle = () => this.setState({drawer_open: !this.state.drawer_open});
+  handleClose = () => this.setState({drawer_open: false});
+
   render() {
     if (this.state.ros_status === "disconnected"){
       return (
@@ -62,16 +66,43 @@ class App extends Component {
     return (
       <MuiThemeProvider muiTheme={getMuiTheme(lightBaseTheme)}>
         <div>
-          <AppBar title="Control Center"/>
-          <RappStarter ros={this.ros}/>
-          <Capabilities ros={this.ros}/>
+          <AppBar
+            title="Control Center"
+            onLeftIconButtonClick={this.handleToggle}
+            />
+          <Drawer
+            docked={false}
+            width={200}
+            open={this.state.drawer_open}
+            onRequestChange={(drawer_open) => this.setState({drawer_open})}
+          >
+            <MenuItem
+              onClick={ (event) =>
+                this.setState({active_section: 'rapps'})}>
+              Rapps
+            </MenuItem>
+
+            <MenuItem
+            onClick={ (event) =>
+              this.setState({active_section: 'capabilities'})}>
+              Capabilities
+            </MenuItem>
+
+          </Drawer>
+
+          {this.state.active_section === 'rapps' &&
+            <RappStarter ros={this.ros}/>
+          }
+          {this.state.active_section === 'capabilities' &&
+            <Capabilities ros={this.ros}/>
+          }
+
         </div>
       </MuiThemeProvider>
     );
 
     }
   }
-
 
 }
 

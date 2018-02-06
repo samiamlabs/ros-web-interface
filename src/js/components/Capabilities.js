@@ -35,13 +35,10 @@ export default class Capabilities extends React.Component {
   }
 
   componentWillMount() {
-    this.actions = new CapabilitiesActions();
-    this.actions.init(this.props.ros);
-
     CapabilitiesStore.on("change", this.getAll);
 
-    this.actions.getCapabilities();
-    this.actions.getRunning();
+    this.actions = new CapabilitiesActions();
+    this.actions.init(this.props.ros);
   }
 
   componentWillUnmount() {
@@ -181,6 +178,8 @@ class CapabilityProvider extends React.Component {
       label = nameArray[nameArray.length -1];
     }
 
+    label = label.replace(/_/g, ' ');
+
     return (
       <Toggle
         label={label}
@@ -192,8 +191,3 @@ class CapabilityProvider extends React.Component {
     )
   }
 }
-
-// function Welcome(props) {
-//   let heading = <h3>bloo</h3>;
-//   return <div>{heading}<h1>Hello, {props.name}</h1></div>
-// }
