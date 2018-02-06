@@ -14,7 +14,6 @@ import {AppBar, Drawer, MenuItem} from 'material-ui';
 import RappStarter from './js/components/RappStarter.js';
 import Capabilities from './js/components/Capabilities.js';
 
-import ROSLIB from 'roslib';
 import RosClient from 'roslib-client';
 
 class App extends Component {
@@ -26,41 +25,25 @@ class App extends Component {
       active_section: 'rapps',
     };
 
-    this.ros = new ROSLIB.Ros();
-
-    this.ros_url = 'ws://localhost:9090'
     this.rosUrl = 'ws://localhost:9090'
 
-    this.ros.connect(this.ros_url);
+    this.rosClient = new RosClient({
+      url: this.rosUrl,
+    });
 
-    this.ros_status = "disconnected";
-
-    this.ros.on('connection', () => {
+    this.rosClient.on('connected', () => {
       console.log('Connected to websocket server.');
       this.setState({
         ros_status: "connected",
       });
     });
 
-    this.ros.on('error', () => {
-      console.log('Websocket error (ROS).');
-      this.setState({
-        ros_status: "error",
-      });
-    });
-
-    this.ros.on('close', () => {
+    this.rosClient.on('disconnected', () => {
       console.log('Disconnected from websocket server.');
       this.setState({
         ros_status: "disconnected",
       });
     });
-
-    // client
-    this.rosClient = new RosClient({
-      url: this.rosUrl,
-    });
-
 
   }
 
