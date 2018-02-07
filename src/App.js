@@ -8,13 +8,27 @@ import lightBaseTheme from 'material-ui/styles/baseThemes/lightBaseTheme';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import getMuiTheme from 'material-ui/styles/getMuiTheme';
 
-
-import {AppBar, Drawer, MenuItem} from 'material-ui';
+import {AppBar, Drawer, MenuItem, IconMenu, IconButton} from 'material-ui';
+import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 import RappStarter from './js/components/RappStarter.js';
 import Capabilities from './js/components/Capabilities.js';
 
 import RosClient from 'roslib-client';
+
+const Logged = (props) => (
+  <IconMenu
+    {...props}
+    iconButtonElement={
+      <IconButton><MoreVertIcon /></IconButton>
+    }
+    targetOrigin={{horizontal: 'right', vertical: 'top'}}
+    anchorOrigin={{horizontal: 'right', vertical: 'top'}}
+  >
+    <MenuItem primaryText="Refresh" />
+    <MenuItem primaryText="Change ROS url" />
+  </IconMenu>
+);
 
 class App extends Component {
   constructor(...args) {
@@ -22,7 +36,7 @@ class App extends Component {
     this.state = {
       ros_status: "disconnected",
       drawer_open: false,
-      active_section: 'rapps',
+      active_section: 'capabilities',
     };
 
     this.rosUrl = 'ws://localhost:9090'
@@ -62,6 +76,7 @@ class App extends Component {
           <AppBar
             title="Control Center"
             onLeftIconButtonClick={this.handleToggle}
+            iconElementRight={<Logged/>}
             />
           <Drawer
             docked={false}

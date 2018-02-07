@@ -1,6 +1,6 @@
 import dispatcher from '../dispatcher';
 
-import {Promise} from 'bluebird';
+import {all, coroutine} from 'bluebird';
 
 export default class CapabilitiesActions {
   init = (rosClient) =>{
@@ -9,13 +9,19 @@ export default class CapabilitiesActions {
     this.capabilityFetchLock = false;
     this.interface_counter = 0;
 
-    this.capabilityEventListener = this.rosClient.topic.subscribe('/capability_server/events', 'capabilities/CapabilityEvent', (message) => {
-      this.getCapabilities();
-      this.getRunning();
+    this.capabilityEventListener = this.rosClient.topic.subscribe(
+      '/capability_server/events',
+      'capabilities/CapabilityEvent',
+      (message) => {
+        console.log("event")
+        this.getCapabilities();
+        this.getRunning();
     });
 
     this.getCapabilities();
     this.getRunning();
+
+    // this.getCapabilities.bind(this);
   }
 
   dispose = () => {
@@ -57,39 +63,35 @@ export default class CapabilitiesActions {
     });
   }
 
-  getCapabilities = () => {
-    const getInterfaces = this.rosClient.service.call(
+  getCapabilities = coroutine( function*() {
+
+    const interfaceResponse = yield this.rosClient.service.call(
       '/capability_server/get_interfaces',
       'capabilities/GetInterfaces',
       {}
     );
 
-    getInterfaces.then( result => {
-      const interfaces = [];
-      const providers = [];
+    const interfaces = interfaceResponse.interfaces;
 
-      result.interfaces.forEach( interface_name => {
-        const getProviders = this.rosClient.service.call(
-          '/capability_server/get_providers',
-          'capabilities/GetProviders',
-          {
-            interface: interface_name,
-            include_semantic: false,
-          }
-        );
-        providers.push(getProviders);
-        interfaces.push(interface_name);
-      });
+    const providerPromises = interfaces.map( interface_name => (
+      this.rosClient.service.call(
+        '/capability_server/get_providers',
+        'capabilities/GetProviders',
+        {
+          interface: interface_name,
+          include_semantic: false,
+        })
+    ));
 
-      Promise.all(providers).then( (result) => {
-        const capabilities = [];
-        for (let index = 0; index < interfaces.length; index++) {
-          result[index].providers.forEach( provider => {
-            capabilities.push({interface_name: interfaces[index], provider: provider});
-          });
-        }
-        dispatcher.dispatch({type: "AVAILABLE_CAPABILITIES", available: capabilities});
+    const providerResponses = yield all(providerPromises);
+
+    const capabilities = [];
+    for (let index = 0; index < interfaces.length; index++) {
+      providerResponses[index].providers.forEach( provider => {
+        capabilities.push({interface_name: interfaces[index], provider});
       });
-    });
-  }
+    }
+
+    dispatcher.dispatch({type: "AVAILABLE_CAPABILITIES", available: capabilities});
+  });
 }
