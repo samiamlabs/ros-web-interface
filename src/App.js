@@ -13,6 +13,7 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 import RappStarter from './js/components/RappStarter.js';
 import Capabilities from './js/components/Capabilities.js';
+import Map from './js/components/Map.js';
 
 import RosClient from 'roslib-client';
 
@@ -142,6 +143,8 @@ class App extends Component {
           {this.state.active_section === 'capabilities' && this.state.ros_status === 'connected' &&
             <Capabilities rosClient={this.rosClient}/>
           }
+
+          <Map/>
 
         </div>
       </MuiThemeProvider>
