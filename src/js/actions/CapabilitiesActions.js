@@ -13,7 +13,6 @@ export default class CapabilitiesActions {
       '/capability_server/events',
       'capabilities/CapabilityEvent',
       (message) => {
-        console.log("event")
         this.getCapabilities();
         this.getRunning();
     });

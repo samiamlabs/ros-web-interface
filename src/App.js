@@ -56,7 +56,6 @@ class App extends Component {
       this.setState({
         ros_status: "connected",
       });
-      console.log("connected")
     });
 
     this.rosClient.on('disconnected', () => {

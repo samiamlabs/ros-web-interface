@@ -44,8 +44,7 @@ export default class Capabilities extends React.Component {
   componentWillUnmount() {
     CapabilitiesStore.removeListener("change", this.getAll);
 
-    // FIXME: Component won't subscribe on next mount if disposing
-    // this.actions.dispose();
+    this.actions.dispose();
   }
 
   getAll = () => {
