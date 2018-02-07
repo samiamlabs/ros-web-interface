@@ -136,6 +136,8 @@ class App extends Component {
             </MenuItem>
 
           </Drawer>
+          
+          <Map/>
 
           {this.state.active_section === 'rapps' && this.state.ros_status === 'connected' &&
             <RappStarter rosClient={this.rosClient}/>
@@ -144,7 +146,6 @@ class App extends Component {
             <Capabilities rosClient={this.rosClient}/>
           }
 
-          <Map/>
 
         </div>
       </MuiThemeProvider>
