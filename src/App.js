@@ -17,6 +17,8 @@ import Map from './js/components/Map.js';
 
 import RosClient from 'roslib-client';
 
+import Cookies from 'universal-cookie';
+
 const Logged = (props) => (
   <IconMenu
     iconButtonElement={
@@ -33,15 +35,28 @@ const Logged = (props) => (
 class App extends Component {
   constructor(...args) {
     super(...args);
+
+    this.cookies = new Cookies();
+
+    let hostname = this.cookies.get('hostname');
+    if(typeof(hostname) === 'undefined'){
+      hostname = 'localhost';
+    }
+
+    let active_section = this.cookies.get('active_section');
+    if(typeof(active_section) === 'undefined'){
+      active_section = 'rapps';
+    }
+
+    this.setRosClient(hostname);
+
     this.state = {
       ros_status: "disconnected",
       drawer_open: false,
       rosHostnameOpen: false,
-      active_section: 'capabilities',
-      hostnameText: '192.168.254.47'
+      active_section: active_section,
+      hostnameText: hostname,
     };
-
-    this.setRosClient('localhost');
 
   }
 
@@ -77,11 +92,17 @@ class App extends Component {
     this.setState({ros_status: 'disconnected'});
     this.setRosClient(this.state.hostnameText);
 
+    this.cookies.set('hostname', this.state.hostnameText, {path: '/'});
     this.handleHostnameClose();
   }
 
   updateHostnameText = (event, newValue) => {
     this.setState({hostnameText: newValue});
+  }
+
+  setActiveSection = (active_section, event) => {
+    this.cookies.set('active_section', active_section, {path: '/'});
+    this.setState({active_section});
   }
 
   render() {
@@ -124,20 +145,25 @@ class App extends Component {
             onRequestChange={(drawer_open) => this.setState({drawer_open})}
           >
             <MenuItem
-              onClick={ (event) =>
-                this.setState({active_section: 'rapps'})}>
+              onClick={this.setActiveSection.bind(this, 'rapps')}>
               Rapps
             </MenuItem>
 
             <MenuItem
-            onClick={ (event) =>
-              this.setState({active_section: 'capabilities'})}>
+              onClick={this.setActiveSection.bind(this, 'capabilities')}>
               Capabilities
             </MenuItem>
 
+            <MenuItem
+              onClick={this.setActiveSection.bind(this, 'map')}>
+              Map
+            </MenuItem>
+
           </Drawer>
-          
-          <Map/>
+
+          {this.state.active_section === 'map' && this.state.ros_status === 'connected' &&
+            <Map useDatGui={true}/>
+          }
 
           {this.state.active_section === 'rapps' && this.state.ros_status === 'connected' &&
             <RappStarter rosClient={this.rosClient}/>

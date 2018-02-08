@@ -4,30 +4,41 @@ import Phaser from 'phaser';
 
 import Logo from '../../assets/images/logo.png';
 
+import dat from 'dat.gui';
 export default class Map extends React.Component {
   constructor(...args) {
     super(...args);
-
-    var config = {
-    type: Phaser.AUTO,
-    parent: 'test',
-    width: 800,
-    height: 600,
-    scene: {
-        preload: this.preload,
-        create: this.create
-      }
-    };
-
-
-    this.game = new Phaser.Game(config);
-
+      console.log("create map")
+      console.log(this.props.useDatGui)
     }
 
-    componentWillMount() {
+    componentDidMount() {
+      var config = {
+      type: Phaser.AUTO,
+      parent: 'phaser-map',
+      width: window.innerWidth,
+      height: window.innerHeight,
+      scene: {
+          preload: this.preload,
+          create: this.create
+        }
+      };
+
+
+      this.game = new Phaser.Game(config);
+      this.game.reactMapComponent = this;
+
+      if (this.props.useDatGui){
+        this.game.datGui = new dat.GUI({autoPlace: false});
+      }
     }
 
     componentWillUnmount() {
+      if (this.props.useDatGui){
+        this.game.datGui.destroy(); // does not work properly...
+      }
+
+      this.game.destroy(true);
     }
 
     preload () {
@@ -47,14 +58,39 @@ export default class Map extends React.Component {
           loop: -1
       });
 
+      if (this.sys.game.reactMapComponent.props.useDatGui){
+        const datGui = this.sys.game.datGui;
+
+        let p1 = datGui.addFolder("Pointer");
+        p1.add(this.input, 'x').listen();
+        p1.add(this.input, 'y').listen();
+        p1.open();
+
+        // FIXME: Horrible hack?
+        var customContainer = document.getElementById('phaser-map-dat-gui');
+        customContainer.appendChild(datGui.domElement);
+      }
+
     }
 
     update() {
+      this.game.debug.pointer(this.game.input.activePointer)
     }
 
 
   render() {
-    return (<div id='test'></div>);
-  }
+    const datGuiStyle = {
+      position: 'absolute',
+      top: '90px',
+      right: '100px',
+    };
 
+    return (
+        <div id='phaser-map'>
+          <div id='phaser-map-dat-gui' style={datGuiStyle}/>
+        </div>
+    );
+  }
 }
+
+Map.defaultProps = { useDatGui: false };
