@@ -1,13 +1,12 @@
 import React from 'react';
 
-import {Toolbar, ToolbarGroup, ToolbarTitle} from 'material-ui/Toolbar';
+import {Toolbar, ToolbarGroup, ToolbarTitle, ToolbarSeparator} from 'material-ui/Toolbar';
 import DropDownMenu from 'material-ui/DropDownMenu';
 import MenuItem from 'material-ui/MenuItem';
 import RaisedButton from 'material-ui/RaisedButton';
 
 import RappStarterActions from '../actions/RappStarterActions';
 import RappStarterStore from '../stores/RappStarterStore';
-
 
 export default class RappStarter extends React.Component {
   constructor(...args) {
@@ -66,18 +65,28 @@ export default class RappStarter extends React.Component {
 
       const rappButtonLabel = (this.state.selectedRapp === this.state.rappStatus.rapp.name) ? "Stop": "Start";
 
+      const rapps = this.state.rapps.map( rapp => {
+        const rappArray = rapp.name.split('/');
+        return { text: rappArray[rappArray.length -1], value: rapp.name };
+      });
+
+
       return (
         <Toolbar>
 
           <ToolbarGroup firstChild={true}>
-            <DropDownMenu value={this.state.selectedRapp} onChange={this.actions.handleRappMenuChange}>
-              {this.state.rapps.map((rapp) => (
-                <MenuItem key={rapp.name} value={rapp.name} primaryText={rapp.name} />
+            <DropDownMenu
+              value={this.state.selectedRapp}
+              onChange={this.actions.handleRappMenuChange}
+              >
+              {rapps.map((rapp) => (
+                <MenuItem key={rapp.value} value={rapp.value} primaryText={rapp.text} />
               ))}
             </DropDownMenu>
           </ToolbarGroup>
 
-          <ToolbarGroup>
+          <ToolbarGroup lastChild={true}>
+            <ToolbarSeparator/>
             <RaisedButton onClick={this.buttonClicked}
                           label={rappButtonLabel}
                           primary={rappButtonLabel === "Start"}
