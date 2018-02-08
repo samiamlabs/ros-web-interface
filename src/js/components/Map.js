@@ -9,7 +9,7 @@ export default class Map extends React.Component {
     super(...args);
 
     var config = {
-    type: Phaser.CANVAS,
+    type: Phaser.AUTO,
     parent: 'test',
     width: 800,
     height: 600,
