@@ -31,6 +31,8 @@ export default class RappStarter extends React.Component {
   }
 
   componentWillUnmount() {
+    this.actions.dispose();
+
     RappStarterStore.removeListener("change", this.getAll);
   }
 

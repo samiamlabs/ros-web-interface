@@ -25,7 +25,7 @@ class CapabilitiesStore extends EventEmitter {
         break;
       }
       default:
-        // do nothing
+        // Do nothing
     }
   }
 

@@ -3,11 +3,8 @@ import dispatcher from '../dispatcher';
 import {all, coroutine} from 'bluebird';
 
 export default class CapabilitiesActions {
-  init = (rosClient) =>{
+  init = (rosClient) => {
     this.rosClient = rosClient;
-
-    this.capabilityFetchLock = false;
-    this.interface_counter = 0;
 
     this.capabilityEventListener = this.rosClient.topic.subscribe(
       '/capability_server/events',
@@ -19,8 +16,6 @@ export default class CapabilitiesActions {
 
     this.getCapabilities();
     this.getRunning();
-
-    // this.getCapabilities.bind(this);
   }
 
   dispose = () => {

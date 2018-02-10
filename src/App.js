@@ -13,7 +13,7 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 import RappStarter from './js/components/RappStarter.js';
 import Capabilities from './js/components/Capabilities.js';
-import Map from './js/components/Map.js';
+import Navigator from './js/components/Navigator.js';
 
 import RosClient from 'roslib-client';
 
@@ -155,14 +155,14 @@ class App extends Component {
             </MenuItem>
 
             <MenuItem
-              onClick={this.setActiveSection.bind(this, 'map')}>
-              Map
+              onClick={this.setActiveSection.bind(this, 'navigator')}>
+              Navigator
             </MenuItem>
 
           </Drawer>
 
-          {this.state.active_section === 'map' && this.state.ros_status === 'connected' &&
-            <Map useDatGui={true}/>
+          {this.state.active_section === 'navigator' && this.state.ros_status === 'connected' &&
+            <Navigator useDatGui={true} rosClient={this.rosClient}/>
           }
 
           {this.state.active_section === 'rapps' && this.state.ros_status === 'connected' &&

@@ -24,6 +24,11 @@ export default class RappStarterActions {
 
   }
 
+  dispose = () => {
+    this.rappListListener.dispose();
+    this.rappStatusListener.dispose();
+  }
+
   handleRappMenuChange = (event, index, value) => {
     dispatcher.dispatch({type: "SELECTED_RAPP", selectedRapp: value});
   }
