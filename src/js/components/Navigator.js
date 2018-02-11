@@ -14,11 +14,13 @@ export default class Navigator extends React.Component {
     this.actions.init(this.props.rosClient);
 
     this.storeState = NavigatorStore.getState();
-    this.navigatorGame = new NavigatorGame({storeState: this.storeState, useDatGui: this.props.useDatGui});
 
+    this.navigatorGame = new NavigatorGame({storeState: this.storeState, useDatGui: this.props.useDatGui});
   }
 
   componentWillUnmount() {
+    this.actions.dispose();
+
     NavigatorStore.removeListener("change", this.updateStoreState);
     this.navigatorGame.destroy();
   }

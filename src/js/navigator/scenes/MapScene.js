@@ -3,6 +3,11 @@ import dat from 'dat.gui';
 
 import Logo from '../assets/images/logo.png';
 
+import Map from '../sprites/Map';
+import Robot from '../sprites/Robot';
+
+// import {quaternionToTheta} from '../helpers/GeometryMath';
+
 export default class MapScene extends Phaser.Scene {
   constructor({useDatGui =  null, storeState = null}) {
     super({
@@ -33,25 +38,52 @@ export default class MapScene extends Phaser.Scene {
 
   preload() {
     this.load.image('logo', Logo);
+    // this.load.image('map', Logo);
   }
 
   create() {
     this.initCameraControl();
-    this.initMapSprite();
+
+    this.createMap();
+    this.createRobot();
+
+    // Create circle at 0 0
+    const graphics = this.add.graphics();
+
+    var color = 0xffff00;
+    var thickness = 4;
+    var alpha = 1;
+
+    graphics.lineStyle(thickness, color, alpha);
+
+    var a = new Phaser.Geom.Point(0, 0);
+    var radius = 10;
+
+    graphics.strokeCircle(a.x, a.y, radius);
 
     if(this.useDatGui) {
-      this.initDatGui();
+      this.createDatGui();
     }
+
+    // Set Inital camera position
+    const cam = this.cameras.main;
+    cam.scrollX = -this.sys.game.config.width/2;
+    cam.scrollY = -this.sys.game.config.height/2;
+
   }
 
   update(time, delta) {
+
     this.controls.update(delta);
 
-    this.updateRobotPose();
+    this.map.update(this.storeState);
+    // this.updateRobot();
+    this.robot.update(this.storeState);
 
     if(this.useDatGui) {
       this.updateDatGui();
     }
+    // this.delta.setText(this.sys.game.loop.deltaHistory);
   }
 
   updateDatGui() {
@@ -61,31 +93,36 @@ export default class MapScene extends Phaser.Scene {
     this.conv.cx = p.x;
     this.conv.cy = p.y;
 
-    const point = Phaser.Math.TransformXY(p.x, p.y, this.robot.x, this.robot.y, this.robot.rotation, this.robot.scaleX, this.robot.scaleY);
+    const point = Phaser.Math.TransformXY(p.x, p.y, this.map.x, this.map.y, this.map.rotation, this.map.scaleX, this.map.scaleY);
     this.conv.px = point.x;
     this.conv.py = point.y;
   }
 
-  updateRobotPose() {
-    this.robot.x = this.storeState.getIn(['robotPose', 'position', 'x']);
-    this.robot.y = this.storeState.getIn(['robotPose', 'position', 'y']);
+  createMap() {
+    this.map = new Map({
+      scene: this,
+      storeState: this.storeState,
+      key: 'map',
+      x: 0,
+      y: 0,
+      scaleFactor: 2,
+    });
+
   }
 
-  initMapSprite() {
-    const mapTexture = this.textures.createCanvas('map', 16, 256);
+  createRobot() {
+    const x = this.storeState.getIn(['robotPose', 'position', 'x']);
+    const y = this.storeState.getIn(['robotPose', 'position', 'y']);
 
-    var canvas = mapTexture.getSourceImage();
-    var context = canvas.getContext('2d');
-    var imgData = context.createImageData(16,256);
-
-    for (let i=0; i<imgData.data.length; i++){
-      imgData.data[i] = 255;
-    }
-    context.putImageData(imgData, 0, 0);
-
-    this.textures.addCanvas('map', canvas);
-
-    this.robot = this.add.sprite(0, 0, 'map').setScale(1.5,1.5);
+    this.robot = new Robot({
+      scene: this,
+      storeState: this.storeState,
+      key: 'logo',
+      x,
+      y,
+      map: this.map,
+      scaleFactor: 0.1,
+    });
 
   }
 
@@ -115,7 +152,7 @@ export default class MapScene extends Phaser.Scene {
     }, this);
   }
 
-  initDatGui() {
+  createDatGui() {
 
     this.conv = {
       cx: 0,
@@ -126,7 +163,12 @@ export default class MapScene extends Phaser.Scene {
 
     const datGui = this.datGui;
 
-    let p1 = datGui.addFolder("pointer");
+    const g1 = datGui.addFolder('game');
+    g1.add(this.sys.game.loop, 'actualFps').listen();
+    g1.add(this.sys.game.loop, 'delta').listen();
+    g1.open();
+
+    const p1 = datGui.addFolder("pointer");
     p1.add(this.input, 'x').listen();
     p1.add(this.input, 'y').listen();
     p1.add(this.conv, 'cx').listen();
@@ -141,13 +183,25 @@ export default class MapScene extends Phaser.Scene {
       line3: 'z & x to rotate',
     }
 
-    const cam = this.cameras.main;
-
     const robot1 = datGui.addFolder('robot');
     robot1.add(this.robot, 'x').listen();
     robot1.add(this.robot, 'y').listen();
     robot1.open();
 
+    const map1 = datGui.addFolder('map');
+    map1.add(this.map, 'x').listen();
+    map1.add(this.map, 'y').listen();
+    map1.add(this.map, 'originX').listen();
+    map1.add(this.map, 'originY').listen();
+    map1.add(this.map, '_displayOriginX').listen();
+    map1.add(this.map, '_displayOriginY').listen();
+    map1.add(this.map, 'width').listen();
+    map1.add(this.map, 'height').listen();
+    map1.add(this.map, 'scaleX').listen();
+    map1.add(this.map, 'scaleY').listen();
+    map1.open();
+
+    const cam = this.cameras.main;
     const f1 = datGui.addFolder('camera');
     f1.add(cam, 'x').listen();
     f1.add(cam, 'y').listen();
@@ -159,6 +213,8 @@ export default class MapScene extends Phaser.Scene {
     f1.add(help, 'line2');
     f1.add(help, 'line3');
     f1.open();
+
+
     // FIXME: Horrible hack?
     var customContainer = document.getElementById('phaser-map-dat-gui');
     customContainer.appendChild(datGui.domElement);
