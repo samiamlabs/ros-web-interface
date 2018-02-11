@@ -9,15 +9,14 @@ export default class Map extends Phaser.GameObjects.Sprite {
     this.storeState = config.storeState;
     this.scaleFactor = config.scaleFactor;
 
-    // this.setScale(10,10);
-    this.updateScale();
+    this.updateMapScale();
   }
 
-  updateScale() {
+  updateMapScale() {
     this.setScale(this.scaleFactor);
   }
 
-  update(storeState) {
+  update = (storeState) => {
     this.storeState = storeState;
 
     if(this.storeState.get('mapData') !== this.mapData){ // If map has been updated
@@ -27,9 +26,6 @@ export default class Map extends Phaser.GameObjects.Sprite {
       this.updateMapOrigin();
       this.updateMapTexture();
     }
-  }
-
-  updateMapScale() {
   }
 
   updateMapOrigin() {

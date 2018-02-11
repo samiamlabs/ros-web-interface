@@ -12,15 +12,24 @@ export default class Robot extends Phaser.GameObjects.Sprite {
     this.map = config.map;
 
     this.scaleFactor = config.scaleFactor;
-
     this.updateScale();
+
+    this.rosPositionX = 0.1;
+    this.rosPositionY = 0.1;
+
   }
 
-  updateScale() {
+  updateScale = () => {
     this.setScale(this.scaleFactor*this.map.scaleX);
   }
 
-  update(storeState) {
+  updateRosPosition = () => {
+    const position = this.storeState.getIn(['robotPose', 'position']).toJS();
+    this.rosPositionX = position.x;
+    this.rosPositionY = position.y;
+  }
+
+  update = (storeState) => {
     this.storeState = storeState;
     const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
 
@@ -35,5 +44,6 @@ export default class Robot extends Phaser.GameObjects.Sprite {
     this.angle = quaternionToTheta(orientation) + 90;
 
     this.updateScale();
+    this.updateRosPosition();
   }
 }

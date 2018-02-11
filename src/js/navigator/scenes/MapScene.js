@@ -6,10 +6,10 @@ import Logo from '../assets/images/logo.png';
 import Map from '../sprites/Map';
 import Robot from '../sprites/Robot';
 
-// import {quaternionToTheta} from '../helpers/GeometryMath';
+import ROSLIB from 'roslib';
 
 export default class MapScene extends Phaser.Scene {
-  constructor({useDatGui =  null, storeState = null}) {
+  constructor({useDatGui =  null, storeState = null, actions = null}) {
     super({
       key: 'MapScene'
     });
@@ -18,6 +18,8 @@ export default class MapScene extends Phaser.Scene {
 
     this.storeState = storeState;
     this.laseStoreState = storeState;
+
+    this.actions = actions;
 
     if (this.useDatGui){
       this.datGui = new dat.GUI({autoPlace: false});
@@ -77,37 +79,56 @@ export default class MapScene extends Phaser.Scene {
     this.controls.update(delta);
 
     this.map.update(this.storeState);
-    // this.updateRobot();
     this.robot.update(this.storeState);
 
     if(this.useDatGui) {
       this.updateDatGui();
     }
-    // this.delta.setText(this.sys.game.loop.deltaHistory);
   }
 
-  updateDatGui() {
-    const camera = this.cameras.main;
-    const p = camera.getWorldPoint(this.input.x, this.input.y);
-
-    this.conv.cx = p.x;
-    this.conv.cy = p.y;
-
-    const point = Phaser.Math.TransformXY(p.x, p.y, this.map.x, this.map.y, this.map.rotation, this.map.scaleX, this.map.scaleY);
-    this.conv.px = point.x;
-    this.conv.py = point.y;
-  }
 
   createMap() {
     this.map = new Map({
       scene: this,
       storeState: this.storeState,
-      key: 'map',
+      key: 'logo',
       x: 0,
       y: 0,
       scaleFactor: 2,
-    });
+    }).setInteractive();
 
+    this.map.on('pointerdown', (pointer) => {
+      const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
+
+      const robotPosePosition = this.storeState.getIn(['robotPose', 'position']).toJS();
+
+      const camera = this.cameras.main;
+      const p = camera.getWorldPoint(pointer.downX, pointer.downY);
+
+      const mapPoint = Phaser.Math.TransformXY(p.x, p.y, this.map.x, this.map.y, this.map.rotation, this.map.scaleX, this.map.scaleY);
+
+      const position = {x: mapPoint.x*resolution, y: -mapPoint.y*resolution, z: 0};
+
+      const xDelta =  position.x - robotPosePosition.x
+      const yDelta =  position.y - robotPosePosition.y
+
+      var thetaRadians  = Math.atan2(xDelta,yDelta);
+
+      if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
+        thetaRadians += (3 * Math.PI / 2);
+      } else {
+        thetaRadians -= (Math.PI/2);
+      }
+
+      var qz =  Math.sin(-thetaRadians/2.0);
+      var qw =  Math.cos(-thetaRadians/2.0);
+
+      var orientation = new ROSLIB.Quaternion({x:0, y:0, z:qz, w:qw});
+
+      const pose = {position, orientation};
+      this.actions.sendNavigationGoal(pose);
+
+    });
   }
 
   createRobot() {
@@ -123,6 +144,7 @@ export default class MapScene extends Phaser.Scene {
       map: this.map,
       scaleFactor: 0.1,
     });
+
 
   }
 
@@ -152,13 +174,31 @@ export default class MapScene extends Phaser.Scene {
     }, this);
   }
 
+  updateDatGui() {
+    const camera = this.cameras.main;
+    const p = camera.getWorldPoint(this.input.x, this.input.y);
+
+    this.conv.camera_x = p.x;
+    this.conv.camera_y = p.y;
+
+    const point = Phaser.Math.TransformXY(p.x, p.y, this.map.x, this.map.y, this.map.rotation, this.map.scaleX, this.map.scaleY);
+    this.conv.map_x = point.x;
+    this.conv.map_y = point.y;
+
+    const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
+    this.conv.ros_x = point.x*resolution;
+    this.conv.ros_y = - point.y*resolution;
+  }
+
   createDatGui() {
 
     this.conv = {
-      cx: 0,
-      cy: 0,
-      px: 0,
-      py: 0
+      camera_x: 0,
+      camera_y: 0,
+      map_x: 0,
+      map_y: 0,
+      ros_x: 0.1,
+      ros_y: 0.1,
     };
 
     const datGui = this.datGui;
@@ -171,10 +211,12 @@ export default class MapScene extends Phaser.Scene {
     const p1 = datGui.addFolder("pointer");
     p1.add(this.input, 'x').listen();
     p1.add(this.input, 'y').listen();
-    p1.add(this.conv, 'cx').listen();
-    p1.add(this.conv, 'cy').listen();
-    p1.add(this.conv, 'px').listen();
-    p1.add(this.conv, 'py').listen();
+    p1.add(this.conv, 'camera_x').listen();
+    p1.add(this.conv, 'camera_y').listen();
+    p1.add(this.conv, 'map_x').listen();
+    p1.add(this.conv, 'map_y').listen();
+    p1.add(this.conv, 'ros_x').listen();
+    p1.add(this.conv, 'ros_y').listen();
     p1.open();
 
     const help = {
@@ -186,6 +228,8 @@ export default class MapScene extends Phaser.Scene {
     const robot1 = datGui.addFolder('robot');
     robot1.add(this.robot, 'x').listen();
     robot1.add(this.robot, 'y').listen();
+    robot1.add(this.robot, 'rosPositionX').listen();
+    robot1.add(this.robot, 'rosPositionY').listen();
     robot1.open();
 
     const map1 = datGui.addFolder('map');

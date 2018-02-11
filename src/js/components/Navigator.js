@@ -15,7 +15,12 @@ export default class Navigator extends React.Component {
 
     this.storeState = NavigatorStore.getState();
 
-    this.navigatorGame = new NavigatorGame({storeState: this.storeState, useDatGui: this.props.useDatGui});
+    this.navigatorGame = new NavigatorGame(
+      {
+        storeState: this.storeState,
+        useDatGui: this.props.useDatGui,
+        actions: this.actions,
+      });
   }
 
   componentWillUnmount() {
