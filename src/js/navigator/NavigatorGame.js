@@ -1,19 +1,23 @@
 import Phaser from 'phaser';
 
 import MapScene from './scenes/MapScene';
+import UiScene from './scenes/UiScene';
 
 export default class NavigatorGame {
   constructor({storeState = null, useDatGui = false, actions = null}) {
 
     this.mapScene = new MapScene({useDatGui, storeState, actions});
+    this.uiScene = new UiScene();
+
 
     var config = {
       type: Phaser.AUTO,
       parent: 'phaser-map',
-      width: window.innerWidth * window.devicePixelRatio,
-      height: window.innerHeight * window.devicePixelRatio,
+      width: window.innerWidth, //* window.devicePixelRatio,
+      height: window.innerHeight, //* window.devicePixelRatio,
       scene: [
-        this.mapScene
+        this.mapScene,
+        this.uiScene,
       ],
     };
 

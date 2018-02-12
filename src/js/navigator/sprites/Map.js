@@ -25,6 +25,10 @@ export default class Map extends Phaser.GameObjects.Sprite {
       this.updateMapScale();
       this.updateMapOrigin();
       this.updateMapTexture();
+
+      this.input.hitArea.width = this.width;
+      this.input.hitArea.height = this.height;
+
     }
   }
 

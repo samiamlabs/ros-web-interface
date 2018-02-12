@@ -25,6 +25,9 @@ export default class MapScene extends Phaser.Scene {
       this.datGui = new dat.GUI({autoPlace: false});
     }
 
+    this.lastNavigationX = 0.1;
+    this.lastNavigationY = 0.1;
+
   }
 
   destroy() {
@@ -49,6 +52,8 @@ export default class MapScene extends Phaser.Scene {
     this.createMap();
     this.createRobot();
 
+    this.createMiniMap();
+
     // Create circle at 0 0
     const graphics = this.add.graphics();
 
@@ -71,6 +76,79 @@ export default class MapScene extends Phaser.Scene {
     const cam = this.cameras.main;
     cam.scrollX = -this.sys.game.config.width/2;
     cam.scrollY = -this.sys.game.config.height/2;
+  }
+
+  createMiniMap() {
+    const {height} = this.sys.game.config;
+    const mapHeight = Math.round(height/2.5)
+    const mapWidth =  mapHeight;
+    // const mapWidth = Math.round(width/3)
+
+    const mapPositionY = height - mapHeight;
+    const mapPositionX =  0;
+
+    this.minimap = this.cameras.add(
+      mapPositionX,
+      mapPositionY,
+      mapWidth,
+      mapHeight
+    ).setZoom(0.4);
+
+    this.minimap.setBackgroundColor(0x000000);
+    this.minimap.scrollX = -mapHeight/2;
+    this.minimap.scrollY = -mapWidth/2;
+
+    this.cameraBorderGraphics = this.add.graphics();
+
+    this.updateCameraBorder();
+  }
+
+  updateCameraBorder() {
+
+    this.cameraBorderGraphics.clear();
+    var color = 0x00BCD4;
+    var thickness = 5;
+    var alpha = 1;
+
+    this.cameraBorderGraphics.lineStyle(thickness, color, alpha);
+
+    const camera = this.cameras.main;
+
+    const cameraWidth = camera.width/camera.zoom;
+    const cameraHeight = camera.height/camera.zoom;
+
+    // TODO: Figure out why this works...
+    const borderPositionX = camera.scrollX - thickness*camera.zoom + (camera.width/2)*(camera.zoom-1)/camera.zoom;
+    const borderPositionY = camera.scrollY + (camera.height/2)*(camera.zoom-1)/camera.zoom;
+
+    this.cameraBorder = this.cameraBorderGraphics.strokeRect(
+      borderPositionX,
+      borderPositionY,
+      cameraWidth + thickness,
+      cameraHeight + thickness
+    );
+
+  }
+
+  updateMiniMap() {
+    if(this.map.height > 0){
+      const mapZoomX = this.minimap.height/(this.map.height*this.map.scaleX);
+      const mapZoomY = this.minimap.width/(this.map.width*this.map.scaleY);
+      let mapZoom;
+
+      if(mapZoomX < mapZoomY){
+        mapZoom = mapZoomX;
+      } else {
+        mapZoom = mapZoomY;
+      }
+
+      this.minimap.setZoom(mapZoom);
+
+      this.minimap.scrollX = -this.minimap.height/2;
+      this.minimap.scrollY = -this.minimap.width/2;
+    }
+
+    this.updateCameraBorder();
 
   }
 
@@ -80,6 +158,8 @@ export default class MapScene extends Phaser.Scene {
 
     this.map.update(this.storeState);
     this.robot.update(this.storeState);
+
+    this.updateMiniMap();
 
     if(this.useDatGui) {
       this.updateDatGui();
@@ -98,37 +178,56 @@ export default class MapScene extends Phaser.Scene {
     }).setInteractive();
 
     this.map.on('pointerdown', (pointer) => {
-      const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
-
-      const robotPosePosition = this.storeState.getIn(['robotPose', 'position']).toJS();
-
-      const camera = this.cameras.main;
-      const p = camera.getWorldPoint(pointer.downX, pointer.downY);
-
-      const mapPoint = Phaser.Math.TransformXY(p.x, p.y, this.map.x, this.map.y, this.map.rotation, this.map.scaleX, this.map.scaleY);
-
-      const position = {x: mapPoint.x*resolution, y: -mapPoint.y*resolution, z: 0};
-
-      const xDelta =  position.x - robotPosePosition.x
-      const yDelta =  position.y - robotPosePosition.y
-
-      var thetaRadians  = Math.atan2(xDelta,yDelta);
-
-      if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
-        thetaRadians += (3 * Math.PI / 2);
-      } else {
-        thetaRadians -= (Math.PI/2);
+      if(pointer.camera === this.cameras.main) {
+        this.sendNavigationGoal(pointer.downX, pointer.downY);
       }
 
-      var qz =  Math.sin(-thetaRadians/2.0);
-      var qw =  Math.cos(-thetaRadians/2.0);
+      if(pointer.camera === this.minimap){
+        const camera = this.minimap;
+        const p = camera.getWorldPoint(pointer.downX, pointer.downY);
 
-      var orientation = new ROSLIB.Quaternion({x:0, y:0, z:qz, w:qw});
-
-      const pose = {position, orientation};
-      this.actions.sendNavigationGoal(pose);
-
+        this.cameras.main.scrollX = p.x - this.sys.game.config.width/2;
+        this.cameras.main.scrollY = p.y - this.sys.game.config.height/2;
+      }
     });
+  }
+
+
+  sendNavigationGoal(x, y) {
+    const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
+
+    const robotPosePosition = this.storeState.getIn(['robotPose', 'position']).toJS();
+
+    const camera = this.cameras.main;
+    const p = camera.getWorldPoint(x, y);
+
+    const mapPoint = Phaser.Math.TransformXY(p.x, p.y, this.map.x, this.map.y, this.map.rotation, this.map.scaleX, this.map.scaleY);
+
+    const position = {x: mapPoint.x*resolution, y: -mapPoint.y*resolution, z: 0};
+
+    const xDelta =  position.x - robotPosePosition.x
+    const yDelta =  position.y - robotPosePosition.y
+
+    var thetaRadians  = Math.atan2(xDelta,yDelta);
+
+    if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
+      thetaRadians += (3 * Math.PI / 2);
+    } else {
+      thetaRadians -= (Math.PI/2);
+    }
+
+    var qz =  Math.sin(-thetaRadians/2.0);
+    var qw =  Math.cos(-thetaRadians/2.0);
+
+    var orientation = new ROSLIB.Quaternion({x:0, y:0, z:qz, w:qw});
+
+    const pose = {position, orientation};
+
+    this.lastNavigationX = position.x;
+    this.lastNavigationY = position.y;
+
+    this.actions.sendNavigationGoal(pose);
+
   }
 
   createRobot() {
@@ -149,6 +248,8 @@ export default class MapScene extends Phaser.Scene {
   }
 
   initCameraControl() {
+    this.cameras.main.setBounds(-2000, -2000, 4000, 4000);
+
     var cursors = this.input.keyboard.createCursorKeys();
     var controlConfig = {
       camera: this.cameras.main,
@@ -206,7 +307,7 @@ export default class MapScene extends Phaser.Scene {
     const g1 = datGui.addFolder('game');
     g1.add(this.sys.game.loop, 'actualFps').listen();
     g1.add(this.sys.game.loop, 'delta').listen();
-    g1.open();
+    // g1.open();
 
     const p1 = datGui.addFolder("pointer");
     p1.add(this.input, 'x').listen();
@@ -217,7 +318,7 @@ export default class MapScene extends Phaser.Scene {
     p1.add(this.conv, 'map_y').listen();
     p1.add(this.conv, 'ros_x').listen();
     p1.add(this.conv, 'ros_y').listen();
-    p1.open();
+    // p1.open();
 
     const help = {
       line1: 'cursors to move',
@@ -230,7 +331,12 @@ export default class MapScene extends Phaser.Scene {
     robot1.add(this.robot, 'y').listen();
     robot1.add(this.robot, 'rosPositionX').listen();
     robot1.add(this.robot, 'rosPositionY').listen();
-    robot1.open();
+    // robot1.open();
+
+    const commands1 = datGui.addFolder('commands');
+    commands1.add(this, 'lastNavigationX').listen();
+    commands1.add(this, 'lastNavigationY').listen();
+    // commands1.open();
 
     const map1 = datGui.addFolder('map');
     map1.add(this.map, 'x').listen();
@@ -243,7 +349,16 @@ export default class MapScene extends Phaser.Scene {
     map1.add(this.map, 'height').listen();
     map1.add(this.map, 'scaleX').listen();
     map1.add(this.map, 'scaleY').listen();
-    map1.open();
+    // map1.open();
+
+    const minimap1 = this.minimap;
+    const mini1 = datGui.addFolder('minimap');
+    mini1.add(minimap1, 'x').listen();
+    mini1.add(minimap1, 'y').listen();
+    mini1.add(minimap1, 'scrollX').listen();
+    mini1.add(minimap1, 'scrollY').listen();
+    mini1.add(minimap1, 'rotation').min(0).step(0.01).listen();
+    mini1.add(minimap1, 'zoom', 0.1, 2).step(0.1).listen();
 
     const cam = this.cameras.main;
     const f1 = datGui.addFolder('camera');
@@ -256,7 +371,7 @@ export default class MapScene extends Phaser.Scene {
     f1.add(help, 'line1');
     f1.add(help, 'line2');
     f1.add(help, 'line3');
-    f1.open();
+    // f1.open();
 
 
     // FIXME: Horrible hack?

@@ -26,8 +26,6 @@ export default class NavigatorActions {
   sendNavigationGoal = (pose) => {
     const header = {seq: 0, stamp: 0, frame_id: "map"}
 
-    console.log(pose)
-
     this.rosClient.topic.publish(
       '/move_base_simple/goal',
       'geometry_msgs/PoseStamped',
