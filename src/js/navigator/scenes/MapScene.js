@@ -34,6 +34,10 @@ export default class MapScene extends Phaser.Scene {
     this.lastNavigationX = 0.1;
     this.lastNavigationY = 0.1;
 
+    this.isPanning = false;
+    this.lastTwoFingerTouchX = 0;
+    this.lastTwoFingerTouchY = 0;
+
   }
 
   destroy() {
@@ -94,6 +98,10 @@ export default class MapScene extends Phaser.Scene {
     }).setInteractive();
 
     this.map.on('pointerdown', (pointer) => {
+      if(this.isPanning) {
+        return;
+      }
+
       if(pointer.camera === this.minimap){
         const camera = this.minimap;
         const p = camera.getWorldPoint(pointer.downX, pointer.downY);
@@ -104,6 +112,11 @@ export default class MapScene extends Phaser.Scene {
     });
 
     this.map.on('pointerup', (pointer) => {
+      if(this.isPanning) {
+        this.isPanning = false;
+        return;
+      }
+
       if(pointer.camera === this.cameras.main) {
 
         const {downX, downY, upX, upY} = pointer;
@@ -131,9 +144,36 @@ export default class MapScene extends Phaser.Scene {
       }
     });
 
-    // this.sys.game.canvas.addEventListener('touchmove', (event) => {
-    //   event.preventDefault();
-    // });
+    // Two finger touch scroll/pan
+    this.sys.game.canvas.addEventListener('touchmove', (event) => {
+      event.preventDefault();
+
+      if(event.touches.length !== 2) {
+        return;
+      }
+      
+      if(!this.isPanning) {
+        this.isPanning = true;
+        this.lastTwoFingerTouchX = event.touches[0].clientX;
+        this.lastTwoFingerTouchY = event.touches[0].clientY;
+        console.log(this.lastTwoFingerTouchX)
+      } else {
+        const panX = this.lastTwoFingerTouchX - event.touches[0].clientX;
+        const panY = this.lastTwoFingerTouchY - event.touches[0].clientY;
+
+        console.log(panX, panY);
+
+        const {zoom} = this.cameras.main;
+
+        this.cameras.main.scrollX += panX/zoom;
+        this.cameras.main.scrollY += panY/zoom;
+
+        this.lastTwoFingerTouchX = event.touches[0].clientX;
+        this.lastTwoFingerTouchY = event.touches[0].clientY;
+
+      }
+      console.log(event);
+    });
   }
 
   createRobot() {
