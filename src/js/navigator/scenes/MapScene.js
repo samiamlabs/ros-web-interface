@@ -1,12 +1,18 @@
 import Phaser from 'phaser';
+
 import dat from 'dat.gui';
 
+// import ImageDataUri from 'image-data-uri';
+
 import Logo from '../assets/images/logo.png';
+import RobotImage from '../assets/images/robot_large.png';
+import RobotMinimapImage from '../assets/images/robot_minimap_large.png';
 
 import Map from '../sprites/Map';
 import Robot from '../sprites/Robot';
 
 import ROSLIB from 'roslib';
+
 
 export default class MapScene extends Phaser.Scene {
   constructor({useDatGui =  null, storeState = null, actions = null}) {
@@ -43,7 +49,18 @@ export default class MapScene extends Phaser.Scene {
 
   preload() {
     this.load.image('logo', Logo);
-    // this.load.image('map', Logo);
+    this.load.image('robot', RobotImage);
+    this.load.image('robotMinimap', RobotMinimapImage);
+  }
+
+  zoomIn = () => {
+    this.map.scaleFactor = this.map.scaleFactor + 0.2;
+    this.map.updateScale();
+  }
+
+  zoomOut = () => {
+    this.map.scaleFactor = this.map.scaleFactor - 0.2
+    this.map.updateScale();
   }
 
   create() {
@@ -54,19 +71,7 @@ export default class MapScene extends Phaser.Scene {
 
     this.createMiniMap();
 
-    // Create circle at 0 0
-    const graphics = this.add.graphics();
-
-    var color = 0xffff00;
-    var thickness = 4;
-    var alpha = 1;
-
-    graphics.lineStyle(thickness, color, alpha);
-
-    var a = new Phaser.Geom.Point(0, 0);
-    var radius = 10;
-
-    graphics.strokeCircle(a.x, a.y, radius);
+    this.initTouchRipple();
 
     if(this.useDatGui) {
       this.createDatGui();
@@ -77,6 +82,57 @@ export default class MapScene extends Phaser.Scene {
     cam.scrollX = -this.sys.game.config.width/2;
     cam.scrollY = -this.sys.game.config.height/2;
   }
+
+  createMap() {
+    this.map = new Map({
+      scene: this,
+      storeState: this.storeState,
+      key: 'logo',
+      x: 0,
+      y: 0,
+      scaleFactor: 2,
+    }).setInteractive();
+
+    this.map.on('pointerdown', (pointer) => {
+      if(pointer.camera === this.cameras.main) {
+        this.sendNavigationGoal(pointer.downX, pointer.downY);
+
+        this.startTouchRipple(pointer.downX, pointer.downY);
+      }
+
+      if(pointer.camera === this.minimap){
+        const camera = this.minimap;
+        const p = camera.getWorldPoint(pointer.downX, pointer.downY);
+
+        this.cameras.main.scrollX = p.x - this.sys.game.config.width/2;
+        this.cameras.main.scrollY = p.y - this.sys.game.config.height/2;
+      }
+
+    });
+
+    // this.sys.game.canvas.addEventListener('touchmove', (event) => {
+    //   event.preventDefault();
+    //   console.log(event)
+    // });
+  }
+
+  createRobot() {
+    const x = this.storeState.getIn(['robotPose', 'position', 'x']);
+    const y = this.storeState.getIn(['robotPose', 'position', 'y']);
+
+    this.robot = new Robot({
+      scene: this,
+      storeState: this.storeState,
+      key: 'robot',
+      x: 0,
+      y: 0,
+      map: this.map,
+      scaleFactor: 0.1,
+      useTween: false,
+      useLowPass: true,
+    });
+  }
+
 
   createMiniMap() {
     const {height} = this.sys.game.config;
@@ -103,93 +159,27 @@ export default class MapScene extends Phaser.Scene {
     this.updateCameraBorder();
   }
 
-  updateCameraBorder() {
+  initTouchRipple() {
+    this.touchRippleData = {x: 3000, y:3000, radius: 1, alpha: 1};
 
-    this.cameraBorderGraphics.clear();
-    var color = 0x00BCD4;
-    var thickness = 5;
-    var alpha = 1;
-
-    this.cameraBorderGraphics.lineStyle(thickness, color, alpha);
-
-    const camera = this.cameras.main;
-
-    const cameraWidth = camera.width/camera.zoom;
-    const cameraHeight = camera.height/camera.zoom;
-
-    // TODO: Figure out why this works...
-    const borderPositionX = camera.scrollX - thickness*camera.zoom + (camera.width/2)*(camera.zoom-1)/camera.zoom;
-    const borderPositionY = camera.scrollY + (camera.height/2)*(camera.zoom-1)/camera.zoom;
-
-    this.cameraBorder = this.cameraBorderGraphics.strokeRect(
-      borderPositionX,
-      borderPositionY,
-      cameraWidth + thickness,
-      cameraHeight + thickness
-    );
-
-  }
-
-  updateMiniMap() {
-    if(this.map.height > 0){
-      const mapZoomX = this.minimap.height/(this.map.height*this.map.scaleX);
-      const mapZoomY = this.minimap.width/(this.map.width*this.map.scaleY);
-      let mapZoom;
-
-      if(mapZoomX < mapZoomY){
-        mapZoom = mapZoomX;
-      } else {
-        mapZoom = mapZoomY;
-      }
-
-      this.minimap.setZoom(mapZoom);
-
-      this.minimap.scrollX = -this.minimap.height/2;
-      this.minimap.scrollY = -this.minimap.width/2;
-    }
-
-    this.updateCameraBorder();
-
-  }
-
-  update(time, delta) {
-
-    this.controls.update(delta);
-
-    this.map.update(this.storeState);
-    this.robot.update(this.storeState);
-
-    this.updateMiniMap();
-
-    if(this.useDatGui) {
-      this.updateDatGui();
-    }
-  }
-
-
-  createMap() {
-    this.map = new Map({
-      scene: this,
-      storeState: this.storeState,
-      key: 'logo',
-      x: 0,
-      y: 0,
-      scaleFactor: 2,
-    }).setInteractive();
-
-    this.map.on('pointerdown', (pointer) => {
-      if(pointer.camera === this.cameras.main) {
-        this.sendNavigationGoal(pointer.downX, pointer.downY);
-      }
-
-      if(pointer.camera === this.minimap){
-        const camera = this.minimap;
-        const p = camera.getWorldPoint(pointer.downX, pointer.downY);
-
-        this.cameras.main.scrollX = p.x - this.sys.game.config.width/2;
-        this.cameras.main.scrollY = p.y - this.sys.game.config.height/2;
-      }
+    this.touchRippleTween = this.tweens.add({
+      targets: this.touchRippleData,
+      radius: 30,
+      alpha: 0,
+      ease: 'Linear',
+      duration: 500,
+      paused: true,
     });
+
+    this.touchRippleGraphics = this.add.graphics();
+  }
+
+  startTouchRipple(x, y)
+  {
+    const p = this.cameras.main.getWorldPoint(x, y);
+    this.touchRippleData.x = p.x;
+    this.touchRippleData.y = p.y;
+    this.touchRippleTween.play();
   }
 
 
@@ -221,29 +211,13 @@ export default class MapScene extends Phaser.Scene {
 
     var orientation = new ROSLIB.Quaternion({x:0, y:0, z:qz, w:qw});
 
+
     const pose = {position, orientation};
 
     this.lastNavigationX = position.x;
     this.lastNavigationY = position.y;
 
     this.actions.sendNavigationGoal(pose);
-
-  }
-
-  createRobot() {
-    const x = this.storeState.getIn(['robotPose', 'position', 'x']);
-    const y = this.storeState.getIn(['robotPose', 'position', 'y']);
-
-    this.robot = new Robot({
-      scene: this,
-      storeState: this.storeState,
-      key: 'logo',
-      x,
-      y,
-      map: this.map,
-      scaleFactor: 0.1,
-    });
-
 
   }
 
@@ -273,6 +247,84 @@ export default class MapScene extends Phaser.Scene {
     this.input.keyboard.on('KEYDOWN_X', function (event) {
       this.cameras.main.rotation -= 0.01;
     }, this);
+  }
+
+
+
+  update(time, delta) {
+
+    this.controls.update(delta);
+
+    this.map.update(this.storeState);
+    this.robot.update(this.storeState, delta);
+
+    this.updateMiniMap();
+
+    this.updateTouchRipple();
+
+    if(this.useDatGui) {
+      this.updateDatGui();
+    }
+  }
+
+  updateMiniMap() {
+    if(this.map.height > 0){
+      const mapZoomX = this.minimap.height/(this.map.height*this.map.scaleX);
+      const mapZoomY = this.minimap.width/(this.map.width*this.map.scaleY);
+      let mapZoom;
+
+      if(mapZoomX < mapZoomY){
+        mapZoom = mapZoomX;
+      } else {
+        mapZoom = mapZoomY;
+      }
+
+      this.minimap.setZoom(mapZoom);
+
+      this.minimap.scrollX = -this.minimap.height/2;
+      this.minimap.scrollY = -this.minimap.width/2;
+    }
+
+    this.updateCameraBorder();
+
+  }
+
+  updateCameraBorder() {
+
+    this.cameraBorderGraphics.clear();
+    var color = 0x00BCD4;
+    var thickness = 5;
+    var alpha = 1;
+
+    this.cameraBorderGraphics.lineStyle(thickness, color, alpha);
+
+    const camera = this.cameras.main;
+
+    const cameraWidth = camera.width/camera.zoom;
+    const cameraHeight = camera.height/camera.zoom;
+
+    // TODO: Figure out why this works...
+    const borderPositionX = camera.scrollX - thickness*camera.zoom + (camera.width/2)*(camera.zoom-1)/camera.zoom;
+    const borderPositionY = camera.scrollY + (camera.height/2)*(camera.zoom-1)/camera.zoom;
+
+    this.cameraBorder = this.cameraBorderGraphics.strokeRect(
+      borderPositionX,
+      borderPositionY,
+      cameraWidth + thickness,
+      cameraHeight + thickness
+    );
+
+  }
+
+  updateTouchRipple() {
+    this.touchRippleGraphics.clear();
+    this.touchRippleGraphics.fillStyle(0x00BCD4, this.touchRippleData.alpha);
+
+    this.touchRippleGraphics.fillCircle(
+      this.touchRippleData.x,
+      this.touchRippleData.y,
+      this.touchRippleData.radius
+    );
   }
 
   updateDatGui() {
@@ -329,6 +381,10 @@ export default class MapScene extends Phaser.Scene {
     const robot1 = datGui.addFolder('robot');
     robot1.add(this.robot, 'x').listen();
     robot1.add(this.robot, 'y').listen();
+    robot1.add(this.robot, 'angle').listen();
+    robot1.add(this.robot, 'useLowPass').listen();
+    robot1.add(this.robot, 'lowpassTrans').listen();
+    robot1.add(this.robot, 'lowpassAngle').listen();
     robot1.add(this.robot, 'rosPositionX').listen();
     robot1.add(this.robot, 'rosPositionY').listen();
     // robot1.open();
