@@ -37,6 +37,8 @@ export default class MapScene extends Phaser.Scene {
     this.isPanning = false;
     this.lastTwoFingerTouchX = 0;
     this.lastTwoFingerTouchY = 0;
+    this.lastTwoFingerDistance = 0;
+    this.enableTouchZoom = true;
 
   }
 
@@ -144,20 +146,31 @@ export default class MapScene extends Phaser.Scene {
       }
     });
 
-    // Two finger touch scroll/pan
+    // Touch pan and zoom
     this.sys.game.canvas.addEventListener('touchmove', (event) => {
       event.preventDefault();
 
       if(event.touches.length !== 2) {
         return;
       }
-      
+
+      // Two finger pan/scroll
       if(!this.isPanning) {
         this.isPanning = true;
         this.lastTwoFingerTouchX = event.touches[0].clientX;
         this.lastTwoFingerTouchY = event.touches[0].clientY;
-        console.log(this.lastTwoFingerTouchX)
+
+        const {clientX, clientY} = event.touches[0]
+        const secondClientX = event.touches[1].clientX;
+        const secondClientY = event.touches[1].clientY;
+
+        const distance = Math.sqrt(Math.pow(clientX-secondClientX, 2) + Math.pow(clientY-secondClientY, 2));
+        this.lastTwoFingerDistance = distance;
+        this.initialTwoFingerDistance = distance;
+
       } else {
+
+        // Pan/scroll
         const panX = this.lastTwoFingerTouchX - event.touches[0].clientX;
         const panY = this.lastTwoFingerTouchY - event.touches[0].clientY;
 
@@ -171,8 +184,35 @@ export default class MapScene extends Phaser.Scene {
         this.lastTwoFingerTouchX = event.touches[0].clientX;
         this.lastTwoFingerTouchY = event.touches[0].clientY;
 
+        // Pinch to zoom
+        if(this.enableTouchZoom) {
+          const {clientX, clientY} = event.touches[0]
+          const secondClientX = event.touches[1].clientX;
+          const secondClientY = event.touches[1].clientY;
+
+          const distance = Math.sqrt(Math.pow(clientX-secondClientX, 2) + Math.pow(clientY-secondClientY, 2));
+
+          const deadZone = 30;
+          if(Math.abs(distance - this.initialTwoFingerDistance) > deadZone) {
+            const scaleFactor = 0.01;
+
+            const zoomAdjustment = -scaleFactor*(this.lastTwoFingerDistance - distance)*zoom;
+            // const mapZoom = this.cameras.main.zoom + zoomAdjustment;
+            const mapZoom = this.map.scaleFactor + zoomAdjustment;
+
+            if(mapZoom > 0){
+              // this.cameras.main.zoom = mapZoom;
+              this.map.scaleFactor = mapZoom;
+              this.map.updateScale();
+            }
+          }
+
+          this.lastTwoFingerDistance = distance;
+        }
+
+
       }
-      console.log(event);
+
     });
   }
 
@@ -454,6 +494,8 @@ export default class MapScene extends Phaser.Scene {
     const commands1 = datGui.addFolder('commands');
     commands1.add(this, 'lastNavigationX').listen();
     commands1.add(this, 'lastNavigationY').listen();
+    commands1.add(this, 'lastTwoFingerDistance').listen();
+    commands1.add(this, 'enableTouchZoom').listen();
     // commands1.open();
 
     const map1 = datGui.addFolder('map');
