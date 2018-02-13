@@ -9,10 +9,12 @@ export default class Map extends Phaser.GameObjects.Sprite {
     this.storeState = config.storeState;
     this.scaleFactor = config.scaleFactor;
 
-    this.updateMapScale();
+    this.delayedTextureUpdate = true;
+
+    this.updateScale();
   }
 
-  updateMapScale() {
+  updateScale() {
     this.setScale(this.scaleFactor);
   }
 
@@ -22,13 +24,14 @@ export default class Map extends Phaser.GameObjects.Sprite {
     if(this.storeState.get('mapData') !== this.mapData){ // If map has been updated
       this.mapData = this.storeState.get('mapData');
 
-      this.updateMapScale();
-      this.updateMapOrigin();
+      this.updateScale();
       this.updateMapTexture();
 
       this.input.hitArea.width = this.width;
       this.input.hitArea.height = this.height;
-
+    } else if(this.delayedTextureUpdate) {
+      this.updateMapTexture();
+      this.delayedTextureUpdate = false;
     }
   }
 
@@ -50,9 +53,11 @@ export default class Map extends Phaser.GameObjects.Sprite {
     if(this.width !== width || this.height !== height) {
       // Figure out why this is neccecary
       this.setSize(width, height);
-      // this.setOriginFromFrame();
+      this.delayedTextureUpdate = true;
       return;
     }
+
+    this.updateMapOrigin();
 
     if(width === 0 || height === 0) {
       return;

@@ -7,7 +7,7 @@ export default class NavigatorGame {
   constructor({storeState = null, useDatGui = false, actions = null}) {
 
     this.mapScene = new MapScene({useDatGui, storeState, actions});
-    this.uiScene = new UiScene();
+    this.uiScene = new UiScene({zoomIn: this.mapScene.zoomIn, zoomOut: this.mapScene.zoomOut});
 
 
     var config = {

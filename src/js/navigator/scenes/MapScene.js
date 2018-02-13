@@ -94,12 +94,6 @@ export default class MapScene extends Phaser.Scene {
     }).setInteractive();
 
     this.map.on('pointerdown', (pointer) => {
-      if(pointer.camera === this.cameras.main) {
-        this.sendNavigationGoal(pointer.downX, pointer.downY);
-
-        this.startTouchRipple(pointer.downX, pointer.downY);
-      }
-
       if(pointer.camera === this.minimap){
         const camera = this.minimap;
         const p = camera.getWorldPoint(pointer.downX, pointer.downY);
@@ -107,18 +101,42 @@ export default class MapScene extends Phaser.Scene {
         this.cameras.main.scrollX = p.x - this.sys.game.config.width/2;
         this.cameras.main.scrollY = p.y - this.sys.game.config.height/2;
       }
+    });
 
+    this.map.on('pointerup', (pointer) => {
+      if(pointer.camera === this.cameras.main) {
+
+        const {downX, downY, upX, upY} = pointer;
+        const distance = Math.sqrt(Math.pow(downX-upX, 2) + Math.pow(downY - upY, 2));
+
+        if(distance > 30){
+          const xDelta = upX - downX;
+          const yDelta =  - (upY - downY);
+
+          let thetaRadians  = Math.atan2(xDelta,yDelta);
+
+          if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
+            thetaRadians += (3 * Math.PI / 2);
+          } else {
+            thetaRadians -= (Math.PI/2);
+          }
+
+          this.sendNavigationGoal({x: pointer.downX, y: pointer.downY, angle: thetaRadians });
+          this.startTouchRipple(pointer.downX, pointer.downY);
+        } else {
+          this.sendNavigationGoal({x: pointer.downX, y: pointer.downY});
+          this.startTouchRipple(pointer.downX, pointer.downY);
+        }
+
+      }
     });
 
     // this.sys.game.canvas.addEventListener('touchmove', (event) => {
     //   event.preventDefault();
-    //   console.log(event)
     // });
   }
 
   createRobot() {
-    const x = this.storeState.getIn(['robotPose', 'position', 'x']);
-    const y = this.storeState.getIn(['robotPose', 'position', 'y']);
 
     this.robot = new Robot({
       scene: this,
@@ -183,7 +201,7 @@ export default class MapScene extends Phaser.Scene {
   }
 
 
-  sendNavigationGoal(x, y) {
+  sendNavigationGoal({x, y, angle = "undefined"}) {
     const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
 
     const robotPosePosition = this.storeState.getIn(['robotPose', 'position']).toJS();
@@ -195,22 +213,26 @@ export default class MapScene extends Phaser.Scene {
 
     const position = {x: mapPoint.x*resolution, y: -mapPoint.y*resolution, z: 0};
 
-    const xDelta =  position.x - robotPosePosition.x
-    const yDelta =  position.y - robotPosePosition.y
+    let thetaRadians;
 
-    var thetaRadians  = Math.atan2(xDelta,yDelta);
+    if(angle === "undefined") {
+      const xDelta =  position.x - robotPosePosition.x
+      const yDelta =  position.y - robotPosePosition.y
 
-    if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
-      thetaRadians += (3 * Math.PI / 2);
+      thetaRadians  = Math.atan2(xDelta,yDelta);
+
+      if (thetaRadians >= 0 && thetaRadians <= Math.PI) {
+        thetaRadians += (3 * Math.PI / 2);
+      } else {
+        thetaRadians -= (Math.PI/2);
+      }
     } else {
-      thetaRadians -= (Math.PI/2);
+      thetaRadians = angle;
     }
 
     var qz =  Math.sin(-thetaRadians/2.0);
     var qw =  Math.cos(-thetaRadians/2.0);
-
     var orientation = new ROSLIB.Quaternion({x:0, y:0, z:qz, w:qw});
-
 
     const pose = {position, orientation};
 
