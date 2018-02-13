@@ -35,6 +35,7 @@ export default class MapScene extends Phaser.Scene {
     this.lastNavigationY = 0.1;
 
     this.isPanning = false;
+    this.wasPanning = false;
     this.lastTwoFingerTouchX = 0;
     this.lastTwoFingerTouchY = 0;
     this.lastTwoFingerDistance = 0;
@@ -119,6 +120,12 @@ export default class MapScene extends Phaser.Scene {
         return;
       }
 
+      // FIXME: Solve this problem in a more better way...
+      if(this.wasPanning) {
+        this.wasPanning = false;
+        return;
+      }
+
       if(pointer.camera === this.cameras.main) {
 
         const {downX, downY, upX, upY} = pointer;
@@ -157,6 +164,7 @@ export default class MapScene extends Phaser.Scene {
       // Two finger pan/scroll
       if(!this.isPanning) {
         this.isPanning = true;
+        this.wasPanning = true;
         this.lastTwoFingerTouchX = event.touches[0].clientX;
         this.lastTwoFingerTouchY = event.touches[0].clientY;
 
@@ -210,7 +218,6 @@ export default class MapScene extends Phaser.Scene {
           this.lastTwoFingerDistance = distance;
         }
 
-
       }
 
     });
@@ -234,23 +241,23 @@ export default class MapScene extends Phaser.Scene {
 
   createMiniMap() {
     const {height} = this.sys.game.config;
-    const mapHeight = Math.round(height/2.5)
-    const mapWidth =  mapHeight;
+    this.minimapHeight = Math.round(height/2.5)
+    this.minimapWidth =  this.minimapHeight;
     // const mapWidth = Math.round(width/3)
 
-    const mapPositionY = height - mapHeight;
+    const mapPositionY = height - this.minimapHeight;
     const mapPositionX =  0;
 
     this.minimap = this.cameras.add(
       mapPositionX,
       mapPositionY,
-      mapWidth,
-      mapHeight
+      this.minimapWidth,
+      this.minimapHeight
     ).setZoom(0.4);
 
     this.minimap.setBackgroundColor(0x000000);
-    this.minimap.scrollX = -mapHeight/2;
-    this.minimap.scrollY = -mapWidth/2;
+    this.minimap.scrollX = -this.minimapHeight/2;
+    this.minimap.scrollY = -this.minimapWidth/2;
 
     this.cameraBorderGraphics = this.add.graphics();
 
@@ -324,7 +331,7 @@ export default class MapScene extends Phaser.Scene {
   }
 
   initCameraControl() {
-    this.cameras.main.setBounds(-2000, -2000, 4000, 4000);
+    // this.cameras.main.setBounds(-2000, -2000, 4000, 4000);
 
     var cursors = this.input.keyboard.createCursorKeys();
     var controlConfig = {
@@ -383,8 +390,15 @@ export default class MapScene extends Phaser.Scene {
 
       this.minimap.setZoom(mapZoom);
 
-      this.minimap.scrollX = -this.minimap.height/2;
-      this.minimap.scrollY = -this.minimap.width/2;
+      this.minimap.scrollX = -this.minimapWidth/2 + (this.map.width/2-this.map._displayOriginX)*this.map.scaleX;
+      this.minimap.scrollY = -this.minimapHeight/2 + (this.map.height/2-this.map._displayOriginY)*this.map.scaleY;
+
+      console.log(this.map.width/2-this.map._displayOriginX)
+
+      // this.minimap.scrollX = -(this.sys.game.config.width/2 + this.map._displayOriginX)/2.5;
+      // this.minimap.scrollY = -(this.sys.game.config.height/2 + this.map._displayOriginY)/2.5;
+      // this.minimap.scrollX = 0//+ this.map._displayOriginX;
+      // this.minimap.scrollY = 0//this.map._displayOriginY;
     }
 
     this.updateCameraBorder();
@@ -509,10 +523,17 @@ export default class MapScene extends Phaser.Scene {
     map1.add(this.map, 'height').listen();
     map1.add(this.map, 'scaleX').listen();
     map1.add(this.map, 'scaleY').listen();
+    map1.add(this.map, 'clearSpaceCuttof').listen();
+    map1.add(this.map, 'wallCuttof').listen();
+    map1.add(this.map, 'clearSpaceBrightness').listen();
+    map1.add(this.map, 'shadowBrightness').listen();
+    map1.add(this.map, 'unexploredBrightness').listen();
     // map1.open();
 
     const minimap1 = this.minimap;
     const mini1 = datGui.addFolder('minimap');
+    mini1.add(minimap1, 'height').listen();
+    mini1.add(minimap1, 'width').listen();
     mini1.add(minimap1, 'x').listen();
     mini1.add(minimap1, 'y').listen();
     mini1.add(minimap1, 'scrollX').listen();

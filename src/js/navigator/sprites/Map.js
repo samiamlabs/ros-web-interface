@@ -9,6 +9,12 @@ export default class Map extends Phaser.GameObjects.Sprite {
     this.storeState = config.storeState;
     this.scaleFactor = config.scaleFactor;
 
+    this.clearSpaceCuttof = 31;
+    this.wallCuttof = 51;
+    this.clearSpaceBrightness = 0.83;
+    this.shadowBrightness = 0.24;
+    this.unexploredBrightness = 0.0;
+
     this.delayedTextureUpdate = true;
 
     this.updateScale();
@@ -81,25 +87,39 @@ export default class Map extends Phaser.GameObjects.Sprite {
         var red, green, blue
         if (data === -1) {
           // Make unexplored black
-          val = 0
+          val = Math.round(this.unexploredBrightness*255);
 
           red = val
           green = val
           blue = val
-        } else if (data > 50) {
+        } else if (data > this.wallCuttof) {
           // Make walls blue
           val = 255 - data
 
           red = 50
           green = 50
           blue = val
+        } else if (data < this.clearSpaceCuttof) {
+          // Make clear space a shade of gray
+          val = 255 - data
+
+          // Adjust brightness
+          const adjustedVal = Math.round(this.clearSpaceBrightness*val)//Math.round(val*this.brightness);
+
+          red = adjustedVal;
+          green = adjustedVal;
+          blue = adjustedVal;
         } else {
           // Make clear space a shade of gray
           val = 255 - data
 
-          red = val
-          green = val
-          blue = val
+          // Adjust brightness
+          const adjustedVal = Math.round(val*this.shadowBrightness);
+
+          red = adjustedVal;
+          green = adjustedVal;
+          blue = adjustedVal;
+
         }
 
         // Determine the index into the image data array
