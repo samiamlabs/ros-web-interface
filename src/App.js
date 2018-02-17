@@ -162,7 +162,7 @@ class App extends Component {
           </Drawer>
 
           {this.state.active_section === 'navigator' && this.state.ros_status === 'connected' &&
-            <Navigator useDatGui={true} rosClient={this.rosClient}/>
+            <Navigator useDatGui={false} rosClient={this.rosClient}/>
           }
 
           {this.state.active_section === 'rapps' && this.state.ros_status === 'connected' &&
