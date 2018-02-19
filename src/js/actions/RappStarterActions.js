@@ -1,7 +1,7 @@
 import dispatcher from '../dispatcher';
 
-export default class RappStarterActions {
-  init(rosClient) {
+class RappStarterActions {
+  connect(rosClient) {
     this.rosClient = rosClient;
 
     this.rappListListener = this.rosClient.topic.subscribe(
@@ -10,30 +10,27 @@ export default class RappStarterActions {
       message => {
         dispatcher.dispatch({
           type: 'AVAILABLE_RAPPS',
-          available_rapps: message.available_rapps
+          availableRapps: message.available_rapps
         });
-      }
-    );
-
-    this.rappStatusListener = this.rosClient.topic.subscribe(
-      '/rocon/app_manager/status',
-      'rocon_app_manager_msgs/Status',
-      message => {
-        dispatcher.dispatch({type: 'RAPP_STATUS', rappStatus: message});
       }
     );
   }
 
-  dispose = () => {
-    this.rappListListener.dispose();
-    this.rappStatusListener.dispose();
+  disconnect = () => {
+    if (typeof this.rosClient !== 'undefined') {
+      this.rappListListener.dispose();
+    }
   };
 
-  handleRappMenuChange = (event, index, value) => {
-    dispatcher.dispatch({type: 'SELECTED_RAPP', selectedRapp: value});
-  };
+  // handleRappMenuChange = (event, index, value) => {
+  //   dispatcher.dispatch({type: 'SELECTED_RAPP', selectedRapp: value});
+  // };
 
   startRapp = name => {
+    dispatcher.dispatch({
+      type: 'OPEN_LOADING_DIALOG',
+      message: 'Starting Robot App'
+    });
     this.rosClient.service
       .call(
         '/rocon/app_manager/start_rapp',
@@ -53,19 +50,29 @@ export default class RappStarterActions {
             )
             .then(result => {
               // Start selected rapp
-              this.rosClient.service.call(
-                '/rocon/app_manager/start_rapp',
-                'rocon_app_manager_msgs/StartRapp',
-                {
-                  name: name
-                }
-              );
+              this.rosClient.service
+                .call(
+                  '/rocon/app_manager/start_rapp',
+                  'rocon_app_manager_msgs/StartRapp',
+                  {
+                    name: name
+                  }
+                )
+                .then(result => {
+                  dispatcher.dispatch({type: 'CLOSE_LOADING_DIALOG'});
+                });
             });
+        } else {
+          dispatcher.dispatch({type: 'CLOSE_LOADING_DIALOG'});
         }
       });
   };
 
   stopRapp = () => {
+    dispatcher.dispatch({
+      type: 'OPEN_LOADING_DIALOG',
+      message: 'Stopping Robot App'
+    });
     this.rosClient.service
       .call(
         '/rocon/app_manager/stop_rapp',
@@ -73,7 +80,15 @@ export default class RappStarterActions {
         {}
       )
       .then(result => {
+        dispatcher.dispatch({type: 'CLOSE_LOADING_DIALOG'});
         // Do nothing
       });
   };
+
+  closeLoadingDialog = () => {
+    dispatcher.dispatch({type: 'CLOSE_LOADING_DIALOG'});
+  };
 }
+
+const rappStarterActions = new RappStarterActions();
+export default rappStarterActions;
