@@ -15,6 +15,12 @@ class RuntimeMonitorActions {
       }
     );
   };
+
+  disconnect = () => {
+    if(typeof (this.rosClient) !== 'undefined') {
+      this.diagnosticsListener.dispose();
+    }
+  }
 }
 
 const runtimeMonitorActions = new RuntimeMonitorActions();

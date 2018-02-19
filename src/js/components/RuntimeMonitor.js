@@ -17,10 +17,22 @@ import {
 
 import {List, ListItem, Paper, Subheader} from 'material-ui';
 
-const style = {
-  margin: 18,
-  width: '90%',
-  display: 'inline-block'
+const styles = {
+  paper: {
+    margin: 18,
+    width: '90%',
+    display: 'inline-block'
+  },
+  headerPaper: {
+    height: 60,
+    width: '100%',
+    display: 'inline-block'
+  },
+  h3: {
+    marginTop: 20,
+    fontWeight: 400,
+    textAlign: 'center'
+  }
 };
 
 export default class RuntimeMonitor extends React.PureComponent {
@@ -40,6 +52,8 @@ export default class RuntimeMonitor extends React.PureComponent {
 
   componentWillUnmount() {
     RuntimeMonitorStore.removeListener('change', this.getStateFromStore);
+
+    RuntimeMonitorActions.disconnect();
   }
 
   getStateFromStore = () => {
@@ -83,18 +97,37 @@ export default class RuntimeMonitor extends React.PureComponent {
 
       const sourceNode = nameArray[0];
       if (sourceNode !== lastSourceNode) {
-        diagnosticsList.push(<Subheader key={sourceNode}>{sourceNode}</Subheader>);
+        diagnosticsList.push(
+          <Subheader key={sourceNode}>{sourceNode}</Subheader>
+        );
       }
+
       lastSourceNode = sourceNode;
 
-      const values = diagnosticItem
-        .get('values')
-        .map(keyValuePair => {
-          const value = keyValuePair.get('value');
-          const key = keyValuePair.get('key');
-          return <ListItem key={key} primaryText={value} secondaryText={key} />;
-        })
-        .toArray();
+      const values = [];
+      values.push(
+        <ListItem
+          key={'Message'}
+          primaryText={diagnosticItem.get('message')}
+          secondaryText={'Message'}
+        />
+      );
+
+      values.push(
+        <ListItem
+          key={'Hardware Id'}
+          primaryText={diagnosticItem.get('hardware_id')}
+          secondaryText={'Hardware ID'}
+        />
+      );
+
+      diagnosticItem.get('values').forEach(keyValuePair => {
+        const value = keyValuePair.get('value');
+        const key = keyValuePair.get('key');
+        values.push(
+          <ListItem key={key} primaryText={value} secondaryText={key} />
+        );
+      });
 
       diagnosticsList.push(
         <ListItem
@@ -107,7 +140,10 @@ export default class RuntimeMonitor extends React.PureComponent {
     });
 
     return (
-      <Paper style={style}>
+      <Paper style={styles.paper}>
+        <Paper style={styles.headerPaper}>
+          <h3 style={styles.h3}>Runtime Monitor</h3>
+        </Paper>
         <List>{diagnosticsList}</List>
       </Paper>
     );

@@ -182,8 +182,6 @@ export default class MapScene extends Phaser.Scene {
         const panX = this.lastTwoFingerTouchX - event.touches[0].clientX;
         const panY = this.lastTwoFingerTouchY - event.touches[0].clientY;
 
-        console.log(panX, panY);
-
         const {zoom} = this.cameras.main;
 
         this.cameras.main.scrollX += panX/zoom;
@@ -393,12 +391,6 @@ export default class MapScene extends Phaser.Scene {
       this.minimap.scrollX = -this.minimapWidth/2 + (this.map.width/2-this.map._displayOriginX)*this.map.scaleX;
       this.minimap.scrollY = -this.minimapHeight/2 + (this.map.height/2-this.map._displayOriginY)*this.map.scaleY;
 
-      console.log(this.map.width/2-this.map._displayOriginX)
-
-      // this.minimap.scrollX = -(this.sys.game.config.width/2 + this.map._displayOriginX)/2.5;
-      // this.minimap.scrollY = -(this.sys.game.config.height/2 + this.map._displayOriginY)/2.5;
-      // this.minimap.scrollX = 0//+ this.map._displayOriginX;
-      // this.minimap.scrollY = 0//this.map._displayOriginY;
     }
 
     this.updateCameraBorder();

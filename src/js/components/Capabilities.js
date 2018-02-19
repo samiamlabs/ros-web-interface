@@ -3,25 +3,31 @@ import React from 'react';
 import CapabilitiesActions from '../actions/CapabilitiesActions';
 import CapabilitiesStore from '../stores/CapabilitiesStore';
 
-import {Toggle, Paper, Subheader, Divider} from 'material-ui';
+import {Toggle, Paper, Subheader} from 'material-ui';
 
 // import Immutable from 'immutable';
 const styles = {
   paper: {
-    maxWidth: 500,
-    display: 'inline-block',
+    margin: 18,
+    width: '90%',
+    display: 'inline-block'
+  },
+  headerPaper: {
+    height: 60,
+    width: '100%',
+    display: 'inline-block'
   },
   toggle: {
-    marginBottom: 16,
+    marginBottom: 16
   },
   h3: {
     marginTop: 20,
     fontWeight: 400,
-    textAlign: 'center',
+    textAlign: 'center'
   },
   providerContainer: {
     marginLeft: 30,
-    marginRight: 30,
+    marginRight: 30
   }
 };
 
@@ -30,33 +36,33 @@ export default class Capabilities extends React.Component {
     super(...args);
 
     this.state = {
-      store: CapabilitiesStore.getState(),
+      store: CapabilitiesStore.getState()
     };
   }
 
   componentWillMount() {
-    CapabilitiesStore.on("change", this.getAll);
+    CapabilitiesStore.on('change', this.getAll);
 
     this.actions = new CapabilitiesActions();
     this.actions.init(this.props.rosClient);
   }
 
   componentWillUnmount() {
-    CapabilitiesStore.removeListener("change", this.getAll);
+    CapabilitiesStore.removeListener('change', this.getAll);
 
     this.actions.dispose();
   }
 
   getAll = () => {
     this.setState({
-      store: CapabilitiesStore.getState(),
+      store: CapabilitiesStore.getState()
     });
-  }
+  };
 
   handleToggle = (provider, event, isInputChecked) => {
     const available = this.state.store.get('available').toJS();
 
-    available.forEach( (capability) => {
+    available.forEach(capability => {
       if (capability.provider === provider) {
         if (isInputChecked) {
           this.actions.startCapability(capability.interface_name, provider);
@@ -66,14 +72,17 @@ export default class Capabilities extends React.Component {
         return;
       }
     });
-  }
+  };
 
-  render () {
+  render() {
     const state = this.state.store;
 
-    const running_providers = state.get('running').map( (capability) => {
-      return capability.getIn(['capability', 'provider']);
-    }).toJS();
+    const running_providers = state
+      .get('running')
+      .map(capability => {
+        return capability.getIn(['capability', 'provider']);
+      })
+      .toJS();
     const available_capabilities = state.get('available').toJS();
 
     return (
@@ -84,7 +93,7 @@ export default class Capabilities extends React.Component {
           handleToggle={this.handleToggle}
         />
       </div>
-    )
+    );
   }
 }
 
@@ -97,7 +106,7 @@ class CapabilityTable extends React.Component {
       return <h2>No capabilities found!</h2>;
     }
 
-    const availableSorted = this.props.available.sort( (a, b) => {
+    const availableSorted = this.props.available.sort((a, b) => {
       if (a.interface_name < b.interface_name) {
         return -1;
       }
@@ -117,19 +126,16 @@ class CapabilityTable extends React.Component {
       return 0;
     });
 
-    availableSorted.forEach( (capability) => {
+    availableSorted.forEach(capability => {
       // TODO: Check if capability is acive
       if (capability.interface_name !== lastInterfaceName) {
-        rows.push(
-          <Divider key={capability.interface_name + "_divider"}/>
-        )
         rows.push(
           <CapabilityInterface
             key={capability.interface_name}
             name={capability.interface_name}
             show_pkg={false}
           />
-        )
+        );
       }
 
       const running = this.props.running.includes(capability.provider);
@@ -151,33 +157,32 @@ class CapabilityTable extends React.Component {
 
     return (
       <Paper zDepth={2} style={styles.paper}>
-        <h3 style={styles.h3}>Capabilities</h3>
+        <Paper style={styles.headerPaper}>
+          <h3 style={styles.h3}>Capabilities</h3>
+        </Paper>
         {rows}
       </Paper>
     );
   }
 }
 
-
 class CapabilityInterface extends React.Component {
-  render () {
+  render() {
     let name = this.props.name;
     if (!this.props.show_pkg) {
       const nameArray = name.split('/');
-      name = nameArray[nameArray.length -1];
+      name = nameArray[nameArray.length - 1];
     }
-    return (
-      <Subheader>{name}</Subheader>
-    )
+    return <Subheader>{name}</Subheader>;
   }
 }
 
 class CapabilityProvider extends React.Component {
-  render () {
+  render() {
     let label = this.props.name;
     if (!this.props.show_pkg) {
       const nameArray = label.split('/');
-      label = nameArray[nameArray.length -1];
+      label = nameArray[nameArray.length - 1];
     }
 
     label = label.replace(/_/g, ' ');
@@ -190,6 +195,6 @@ class CapabilityProvider extends React.Component {
         toggled={this.props.running}
         onToggle={this.props.handleToggle.bind(this, this.props.name)}
       />
-    )
+    );
   }
 }

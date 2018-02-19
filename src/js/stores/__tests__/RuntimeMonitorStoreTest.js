@@ -21,7 +21,6 @@ it('receives new diagnostic items', () => {
     type: 'DIAGNOSTIC_ITEMS',
     diagnosticItems
   });
-
   const itemFromState = RuntimeMonitorStore.state
     .get('diagnosticItems')
     .get('left_wheel_driver: Connection');
