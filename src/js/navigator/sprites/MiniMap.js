@@ -16,10 +16,9 @@ export default class MiniMap extends Phaser.GameObjects.Sprite {
     this.setScale(this.scaleFactor);
   }
 
-  update = (storeState) => {
+  update = storeState => {
     this.storeState = storeState;
-
-  }
+  };
 
   updateMapOrigin() {
     // const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
@@ -31,5 +30,4 @@ export default class MiniMap extends Phaser.GameObjects.Sprite {
     // this.setDisplayOrigin(this.width/2 - offsetX, this.height/2 - offsetY);
     //
   }
-
 }

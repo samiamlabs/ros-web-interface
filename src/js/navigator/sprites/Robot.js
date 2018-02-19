@@ -35,64 +35,62 @@ export default class Robot extends Phaser.GameObjects.Sprite {
   }
 
   updateScale = () => {
-    this.setScale(this.scaleFactor*this.map.scaleX);
-  }
+    this.setScale(this.scaleFactor * this.map.scaleX);
+  };
 
   updateRosPosition = () => {
     const position = this.storeState.getIn(['robotPose', 'position']).toJS();
     this.rosPositionX = position.x;
     this.rosPositionY = position.y;
-
-  }
+  };
 
   update = (storeState, delta) => {
     this.storeState = storeState;
     const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
 
     // TODO: Add support for rotatating map
-    const mapPosX = this.storeState.getIn(['robotPose', 'position', 'x'])/resolution;
-    const mapPosY = -this.storeState.getIn(['robotPose', 'position', 'y'])/resolution;
-    const orientation = this.storeState.getIn(['robotPose', 'orientation']).toJS();
+    const mapPosX =
+      this.storeState.getIn(['robotPose', 'position', 'x']) / resolution;
+    const mapPosY =
+      -this.storeState.getIn(['robotPose', 'position', 'y']) / resolution;
+    const orientation = this.storeState
+      .getIn(['robotPose', 'orientation'])
+      .toJS();
 
-    const adjustedMapPosX = this.map.x + this.map.scaleX*mapPosX;
-    const adjustedMapPosY = this.map.y + this.map.scaleY*mapPosY;
-
+    const adjustedMapPosX = this.map.x + this.map.scaleX * mapPosX;
+    const adjustedMapPosY = this.map.y + this.map.scaleY * mapPosY;
 
     const angle = quaternionToTheta(orientation) + 90;
 
-    if(this.useTween) {
-      if(this.positionTween.isPlaying()) {
-        this.positionTween.updateTo('x', adjustedMapPosX , true);
-        this.positionTween.updateTo('y', adjustedMapPosY , true);
-        this.positionTween.updateTo('angle', angle , true);
+    if (this.useTween) {
+      if (this.positionTween.isPlaying()) {
+        this.positionTween.updateTo('x', adjustedMapPosX, true);
+        this.positionTween.updateTo('y', adjustedMapPosY, true);
+        this.positionTween.updateTo('angle', angle, true);
       } else {
         this.positionTween.play();
       }
-    } else if(this.useLowPass) {
-
-      if(Math.abs(this.x - adjustedMapPosX) < 100){
-        this.x += this.lowpassTrans*delta*(adjustedMapPosX - this.x);
+    } else if (this.useLowPass) {
+      if (Math.abs(this.x - adjustedMapPosX) < 100) {
+        this.x += this.lowpassTrans * delta * (adjustedMapPosX - this.x);
       } else {
         this.x = adjustedMapPosX;
       }
 
-      if(Math.abs(this.y - adjustedMapPosY) < 100){
-        this.y += this.lowpassTrans*delta*(adjustedMapPosY - this.y);
+      if (Math.abs(this.y - adjustedMapPosY) < 100) {
+        this.y += this.lowpassTrans * delta * (adjustedMapPosY - this.y);
       } else {
         this.y = adjustedMapPosY;
       }
 
       this.angle = angle;
-      // this.angle += this.lowpassAngle*delta*(angle - this.angle);
-
     } else {
       this.x = adjustedMapPosX;
       this.y = adjustedMapPosY;
       this.angle = angle;
     }
 
-
     this.updateScale();
     this.updateRosPosition();
-  }
+  };
 }

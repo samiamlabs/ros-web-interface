@@ -24,10 +24,11 @@ export default class Map extends Phaser.GameObjects.Sprite {
     this.setScale(this.scaleFactor);
   }
 
-  update = (storeState) => {
+  update = storeState => {
     this.storeState = storeState;
 
-    if(this.storeState.get('mapData') !== this.mapData){ // If map has been updated
+    if (this.storeState.get('mapData') !== this.mapData) {
+      // If map has been updated
       this.mapData = this.storeState.get('mapData');
 
       this.updateScale();
@@ -35,28 +36,29 @@ export default class Map extends Phaser.GameObjects.Sprite {
 
       this.input.hitArea.width = this.width;
       this.input.hitArea.height = this.height;
-    } else if(this.delayedTextureUpdate) {
+    } else if (this.delayedTextureUpdate) {
       this.updateMapTexture();
       this.delayedTextureUpdate = false;
     }
-  }
+  };
 
   updateMapOrigin() {
     const resolution = this.storeState.getIn(['mapInfo', 'resolution']);
-    const mapOrigin = this.storeState.getIn(['mapInfo', 'origin', 'position']).toJS();
+    const mapOrigin = this.storeState
+      .getIn(['mapInfo', 'origin', 'position'])
+      .toJS();
 
-    const offsetX = (resolution*this.width/2 + mapOrigin.x)/resolution;
-    const offsetY = -(resolution*this.height/2 + mapOrigin.y)/resolution;
+    const offsetX = (resolution * this.width / 2 + mapOrigin.x) / resolution;
+    const offsetY = -(resolution * this.height / 2 + mapOrigin.y) / resolution;
 
-    this.setDisplayOrigin(this.width/2 - offsetX, this.height/2 - offsetY);
-
+    this.setDisplayOrigin(this.width / 2 - offsetX, this.height / 2 - offsetY);
   }
 
   updateMapTexture() {
     const {width, height} = this.storeState.get('mapInfo').toJS();
     const mapData = this.storeState.get('mapData');
 
-    if(this.width !== width || this.height !== height) {
+    if (this.width !== width || this.height !== height) {
       // Figure out why this is neccecary
       this.setSize(width, height);
       this.delayedTextureUpdate = true;
@@ -65,7 +67,7 @@ export default class Map extends Phaser.GameObjects.Sprite {
 
     this.updateMapOrigin();
 
-    if(width === 0 || height === 0) {
+    if (width === 0 || height === 0) {
       return;
     }
 
@@ -73,57 +75,56 @@ export default class Map extends Phaser.GameObjects.Sprite {
     const canvas = mapTexture.getSourceImage();
     const context = canvas.getContext('2d');
 
-   const imageData = context.createImageData(width, height);
+    const imageData = context.createImageData(width, height);
 
-    for ( let row = 0; row < height; row++) {
-      for ( let col = 0; col < width; col++) {
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
         // Determine the index into the map data
-        const mapI = col + ((height - row - 1) * width);
+        const mapI = col + (height - row - 1) * width;
         // Determine the value
         const data = mapData[mapI];
 
         let val;
 
-        var red, green, blue
+        var red, green, blue;
         if (data === -1) {
           // Make unexplored black
-          val = Math.round(this.unexploredBrightness*255);
+          val = Math.round(this.unexploredBrightness * 255);
 
-          red = val
-          green = val
-          blue = val
+          red = val;
+          green = val;
+          blue = val;
         } else if (data > this.wallCuttof) {
           // Make walls blue
-          val = 255 - data
+          val = 255 - data;
 
-          red = 50
-          green = 50
-          blue = val
+          red = 50;
+          green = 50;
+          blue = val;
         } else if (data < this.clearSpaceCuttof) {
           // Make clear space a shade of gray
-          val = 255 - data
+          val = 255 - data;
 
           // Adjust brightness
-          const adjustedVal = Math.round(this.clearSpaceBrightness*val)//Math.round(val*this.brightness);
+          const adjustedVal = Math.round(this.clearSpaceBrightness * val); //Math.round(val*this.brightness);
 
           red = adjustedVal;
           green = adjustedVal;
           blue = adjustedVal;
         } else {
           // Make clear space a shade of gray
-          val = 255 - data
+          val = 255 - data;
 
           // Adjust brightness
-          const adjustedVal = Math.round(val*this.shadowBrightness);
+          const adjustedVal = Math.round(val * this.shadowBrightness);
 
           red = adjustedVal;
           green = adjustedVal;
           blue = adjustedVal;
-
         }
 
         // Determine the index into the image data array
-        var i = (col + (row * this.width)) * 4;
+        var i = (col + row * this.width) * 4;
         // r
         imageData.data[i] = red;
         // g

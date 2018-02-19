@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
 import dispatcher from '../dispatcher';
 import Status from '../ros/msg/Status';
@@ -8,7 +8,7 @@ class RappStarterStore extends EventEmitter {
     super();
     this.rapps = [];
     this.rappStatus = {...Status};
-    this.selectedRapp = "No rapps available";
+    this.selectedRapp = 'No rapps available';
   }
 
   getRapps() {
@@ -24,31 +24,34 @@ class RappStarterStore extends EventEmitter {
   }
 
   handleActions(action) {
-    switch(action.type) {
-      case "AVAILABLE_RAPPS": {
+    switch (action.type) {
+      case 'AVAILABLE_RAPPS': {
         this.rapps = action.available_rapps;
 
-        if (this.selectedRapp === "No rapps available" && this.rapps.length > 0) {
+        if (
+          this.selectedRapp === 'No rapps available' &&
+          this.rapps.length > 0
+        ) {
           this.selectedRapp = this.rapps[0].name;
         }
 
-        this.emit("change");
+        this.emit('change');
         break;
       }
-      case "RAPP_STATUS": {
+      case 'RAPP_STATUS': {
         this.rappStatus = action.rappStatus;
         // console.log(this.rappStatus);
         // console.log(this.rappStatus.published_interfaces[0]);
-        this.emit("change");
+        this.emit('change');
         break;
       }
-      case "SELECTED_RAPP": {
-        this.selectedRapp =action.selectedRapp;
-        this.emit("change");
+      case 'SELECTED_RAPP': {
+        this.selectedRapp = action.selectedRapp;
+        this.emit('change');
         break;
       }
       default:
-        // do notihing
+      // do notihing
     }
   }
 }

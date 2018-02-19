@@ -5,24 +5,21 @@ import UiScene from './scenes/UiScene';
 
 export default class NavigatorGame {
   constructor({storeState = null, useDatGui = false, actions = null}) {
-
     this.mapScene = new MapScene({useDatGui, storeState, actions});
-    this.uiScene = new UiScene({zoomIn: this.mapScene.zoomIn, zoomOut: this.mapScene.zoomOut});
-
+    this.uiScene = new UiScene({
+      zoomIn: this.mapScene.zoomIn,
+      zoomOut: this.mapScene.zoomOut
+    });
 
     var config = {
       type: Phaser.AUTO,
       parent: 'phaser-map',
       width: window.innerWidth, //* window.devicePixelRatio,
       height: window.innerHeight, //* window.devicePixelRatio,
-      scene: [
-        this.mapScene,
-        this.uiScene,
-      ],
+      scene: [this.mapScene, this.uiScene]
     };
 
     this.game = new Phaser.Game(config);
-
   }
 
   destroy() {
@@ -30,13 +27,10 @@ export default class NavigatorGame {
     this.mapScene.destroy();
   }
 
-  setStoreState (storeState) {
+  setStoreState(storeState) {
     this.storeState = storeState;
     this.mapScene.setStoreState(storeState);
   }
 
-  update(time, delta) {
-
-
-  }
+  update(time, delta) {}
 }

@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import dispatcher from '../dispatcher';
 
 import Pose from '../ros/msg/Pose';
@@ -14,35 +14,37 @@ class NavigatorStore extends EventEmitter {
   }
 
   handleActions(action) {
-    switch(action.type) {
-      case "ROBOT_POSE": {
+    switch (action.type) {
+      case 'ROBOT_POSE': {
         this.state = this.state.set('robotPose', Immutable.fromJS(action.pose));
-        this.emit("change");
+        this.emit('change');
         break;
       }
-      case "MAP": {
+      case 'MAP': {
         // NOTE: Coverting mapData to immutable takes to long
         this.state = this.state.set('mapData', action.mapData);
-        this.state = this.state.set('mapInfo', Immutable.fromJS(action.mapInfo));
-        this.emit("change");
+        this.state = this.state.set(
+          'mapInfo',
+          Immutable.fromJS(action.mapInfo)
+        );
+        this.emit('change');
         break;
       }
       default:
-        // Do nothing
+      // Do nothing
     }
   }
 
   getState() {
     return this.state;
   }
-
 }
 
 NavigatorStore.defaultState = {
   robotPose: Pose,
   mapInfo: OccupancyGrid.info,
-  mapData: [],
-}
+  mapData: []
+};
 
 const navigatorStore = new NavigatorStore();
 dispatcher.register(navigatorStore.handleActions.bind(navigatorStore));
