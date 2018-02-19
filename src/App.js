@@ -14,6 +14,7 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import RappStarter from './js/components/RappStarter.js';
 import Capabilities from './js/components/Capabilities.js';
 import Navigator from './js/components/Navigator.js';
+import RuntimeMonitor from './js/components/RuntimeMonitor.js';
 
 import RosClient from 'roslib-client';
 
@@ -159,6 +160,11 @@ class App extends Component {
               Navigator
             </MenuItem>
 
+            <MenuItem
+              onClick={this.setActiveSection.bind(this, 'runtime_monitor')}>
+              Runtime Monitor
+            </MenuItem>
+
           </Drawer>
 
           {this.state.active_section === 'navigator' && this.state.ros_status === 'connected' &&
@@ -168,10 +174,14 @@ class App extends Component {
           {this.state.active_section === 'rapps' && this.state.ros_status === 'connected' &&
             <RappStarter rosClient={this.rosClient}/>
           }
+
           {this.state.active_section === 'capabilities' && this.state.ros_status === 'connected' &&
             <Capabilities rosClient={this.rosClient}/>
           }
 
+          {this.state.active_section === 'runtime_monitor' && this.state.ros_status === 'connected' &&
+            <RuntimeMonitor rosClient={this.rosClient}/>
+          }
 
         </div>
       </MuiThemeProvider>

@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import dispatcher from '../dispatcher';
 
 import Immutable from 'immutable';
@@ -8,24 +8,28 @@ class CapabilitiesStore extends EventEmitter {
     super();
 
     this.state = Immutable.fromJS(CapabilitiesStore.defaultState);
-
-    this.capabilityBuffer = [];
   }
 
   handleActions(action) {
-    switch(action.type) {
-      case "RUNNING_CAPABILITIES": {
-        this.state = this.state.set('running', Immutable.fromJS(action.running));
-        this.emit("change");
+    switch (action.type) {
+      case 'RUNNING_CAPABILITIES': {
+        this.state = this.state.set(
+          'running',
+          Immutable.fromJS(action.running)
+        );
+        this.emit('change');
         break;
       }
-      case "AVAILABLE_CAPABILITIES": {
-        this.state = this.state.set('available', Immutable.fromJS(action.available));
-        this.emit("change");
+      case 'AVAILABLE_CAPABILITIES': {
+        this.state = this.state.set(
+          'available',
+          Immutable.fromJS(action.available)
+        );
+        this.emit('change');
         break;
       }
       default:
-        // Do nothing
+      // Do nothing
     }
   }
 
@@ -37,8 +41,8 @@ class CapabilitiesStore extends EventEmitter {
 // Default State
 CapabilitiesStore.defaultState = {
   available: [],
-  running: [],
-}
+  running: []
+};
 
 const capabilitiesStore = new CapabilitiesStore();
 dispatcher.register(capabilitiesStore.handleActions.bind(capabilitiesStore));
