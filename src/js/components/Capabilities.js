@@ -8,9 +8,13 @@ import {Toggle, Paper, Subheader} from 'material-ui';
 // import Immutable from 'immutable';
 const styles = {
   paper: {
-    margin: 18,
+    marginTop: 20,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginBottom: 20,
     width: '90%',
-    display: 'inline-block'
+    maxWidth: 1000,
+    display: 'block'
   },
   headerPaper: {
     height: 60,
@@ -28,6 +32,9 @@ const styles = {
   providerContainer: {
     marginLeft: 30,
     marginRight: 30
+  },
+  bottomSpace: {
+    minHeight: 10
   }
 };
 
@@ -161,6 +168,7 @@ class CapabilityTable extends React.Component {
           <h3 style={styles.h3}>Capabilities</h3>
         </Paper>
         {rows}
+        <div style={styles.bottomSpace}></div>
       </Paper>
     );
   }

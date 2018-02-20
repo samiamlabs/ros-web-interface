@@ -26,6 +26,7 @@
     "eslint-plugin-react": "7.4.0",
     "extract-text-webpack-plugin": "3.0.2",
     "file-loader": "1.1.5",
+    "flow-bin": "^0.66.0",
     "flux": "^3.1.3",
     "fs-extra": "3.0.1",
     "html-webpack-plugin": "2.29.0",
@@ -56,7 +57,8 @@
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
-    "test": "node scripts/test.js --env=jsdom"
+    "test": "node scripts/test.js --env=jsdom",
+    "flow": "flow"
   },
   "jest": {
     "collectCoverageFrom": [

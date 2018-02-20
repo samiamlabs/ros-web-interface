@@ -12,9 +12,13 @@ import {redA400} from 'material-ui/styles/colors';
 
 const styles = {
   paper: {
-    margin: 18,
+    marginTop: 20,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginBottom: 20,
     width: '90%',
-    display: 'inline-block'
+    maxWidth: 1000,
+    display: 'block'
   },
   headerPaper: {
     height: 60,

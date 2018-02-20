@@ -12,20 +12,26 @@ import {
   pinkA200,
   orangeA200,
   lightBlueA200,
-  deepPurpleA200
+  deepPurpleA200,
+  bluegray200,
 } from 'material-ui/styles/colors';
 
 import {List, ListItem, Paper, Subheader} from 'material-ui';
 
 const styles = {
   paper: {
-    margin: 18,
+    marginTop: 20,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    marginBottom: 20,
     width: '90%',
-    display: 'inline-block'
+    maxWidth: 1000,
+    display: 'block'
   },
   headerPaper: {
     height: 60,
     width: '100%',
+    backgroundColor: bluegray200,
     display: 'inline-block'
   },
   h3: {

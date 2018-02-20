@@ -90,6 +90,10 @@ export default class Robot extends Phaser.GameObjects.Sprite {
       this.angle = angle;
     }
 
+    // To stop image from distorting
+    this.x = Math.floor(this.x)
+    this.y = Math.floor(this.y)
+
     this.updateScale();
     this.updateRosPosition();
   };
