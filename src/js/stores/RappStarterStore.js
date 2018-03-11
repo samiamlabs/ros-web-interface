@@ -8,9 +8,6 @@ import Immutable from 'immutable';
 class RappStarterStore extends EventEmitter {
   constructor() {
     super();
-    // this.rapps = [];
-    // this.rappStatus = {...Status};
-    // this.selectedRapp = 'No rapps available';
 
     this.state = Immutable.fromJS(RappStarterStore.defaultState);
   }
@@ -34,17 +31,6 @@ class RappStarterStore extends EventEmitter {
   handleActions(action) {
     switch (action.type) {
       case 'AVAILABLE_RAPPS': {
-        // this.rapps = action.available_rapps;
-        // console.log(this.rapps);
-        //
-        // if (
-        //   this.selectedRapp === 'No rapps available' &&
-        //   this.rapps.length > 0
-        // ) {
-        //   this.selectedRapp = this.rapps[0].name;
-        // }
-        // console.log(action.availableRapps);
-
         action.availableRapps.forEach(rapp => {
           this.state = this.state.setIn(
             ['availableRapps', rapp.name],
@@ -80,7 +66,7 @@ class RappStarterStore extends EventEmitter {
 RappStarterStore.defaultState = {
   availableRapps: {},
   loadingDialogOpen: false,
-  loadingDialogMessage: '',
+  loadingDialogMessage: ''
 };
 
 const rappStarterStore = new RappStarterStore();
